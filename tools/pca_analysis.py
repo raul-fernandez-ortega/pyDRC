@@ -91,16 +91,29 @@ def PCA(DataFileList, PCA_dir, analysis_dir):
         #plt.ylabel("dB")
         plt.grid(True)
     plt.savefig("%s/spectrum_PCA.png"%(analysis_dir))
-    fig, ax = plt.subplots()
-    spectrum = 20*numpy.log10(numpy.abs(numpy.fft.fft(ResultArray[0])))
-    ax.semilogx(numpy.linspace(0, SampleRate, len(spectrum)),spectrum-spectrum.max(),linewidth=0.4)
-    ax.set_xlim(xmin=20.,xmax=20000.)
-    ax.set_ylim(ymin=-50.,ymax=10.)
-    ax.set_xlabel("Frequency Hz")
-    ax.set_ylabel("dB")
-    ax.grid(True)
-    plt.savefig("%s/Spectrum_PCA_principal.png"%(analysis_dir))
 
+    fig, (ax1, ax2) = plt.subplots(2)
+    spectrum = 20*numpy.log10(numpy.abs(numpy.fft.fft(ResultArray[0])))
+    ax2.semilogx(numpy.linspace(0, SampleRate, len(spectrum)),spectrum-spectrum.max(),linewidth=0.4)
+    ax2.set_xlim(xmin=20.,xmax=20000.)
+    ax2.set_ylim(ymin=-50.,ymax=10.)
+    ax2.tick_params(axis='x', labelsize=9)
+    ax2.tick_params(axis='y', labelsize=9)
+    ax2.set_xlabel("Frequency Hz", fontsize = 9)
+    ax2.set_ylabel("dB", fontsize = 9)
+    ax2.grid(True)
+    
+    ax1.plot(numpy.linspace(0, len(ResultArray[0]), len(ResultArray[0])),ResultArray[0]/ResultArray[0].max(),linewidth=0.4)
+    ax1.set_xlim(xmin=0,xmax=1000)
+    ax1.set_ylim(ymin=-1.2,ymax=1.2)
+    ax1.tick_params(axis='x', labelsize=9)
+    ax1.tick_params(axis='y', labelsize=9)
+    ax1.set_xlabel("Time (samples)",fontsize = 9)
+    ax1.set_ylabel("Amplitude (normalized)", fontsize = 9)
+    ax1.grid(True)
+    plt.savefig("%s/Spectrum_PCA_principal.png"%(analysis_dir))
+    pyDRC.WriteSignal('%s/filtered_data__%s.wav'%(analysis_dir,DataFileList[i].split("/")[-1]),DataArray[i],0,dataLength,SampleRate,'F')
+    
 def main():
     impulse_dir ="."
     PCA_dir = "."
