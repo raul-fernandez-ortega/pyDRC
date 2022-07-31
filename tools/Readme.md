@@ -95,7 +95,7 @@ After running pca_analysis over this set of measurements, the PCA principal comp
 
 As can be seen, PCA removes high frequency component of acoustic reflexions, maintaining the speaker response contribution that is common to all measurements. The high frequency spectrum dispersion is strongly reduced, while keeping the low frequency room efects. Dip effects were reduced.
 
-The frequency spectra of all the 8 components resulting of PCA analysis are (Hz in the x-axis, dB in the y-axis, amplitude values are each normalized to max. value):
+The frequency spectra of all the 8 components resulting of PCA analysis are (Hz in the x-axis, dB in the y-axis, each component spectrum is normalized to max. value):
 
 ![PCA component_spectra](sample_plots/spectrum_PCA.png)
 
