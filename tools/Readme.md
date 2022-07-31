@@ -96,3 +96,23 @@ After running pca_analysis over this set of measurements, the PCA principal comp
 And the frequency spectra of all the 8 components resulting of PCA analysis is (Hz in the x-axis, dB in the y-axis):
 
 ![PCA component_spectra](sample_plots/spectrum_PCA.png)
+
+pca_analysis.py Usage:
+
+`python pca_analysis.py -i impulses_dir -p PCA_dir -a analysis_dir`
+
+where:
+- impulses_dir is a directory where all impulse response measurements are saved, each one is a wav format file. Every impulse should have the same sample rate.
+- PCA_dir is a directory where all the components resulting of the PCA analysis are saved after calculation. Principal component is PCA_1.wav.
+- analysis_dir is a directory where all the final analysis plots are saved. For analysis purpose.
+
+PCA_1.wav is teh impulse response we can input to pyDRC for final DRC filter calculation.
+
+## 4. Software needed
+
+These scripts need the following python modules:
+
+- pyDRC 
+- numpy
+- matplotlib
+
