@@ -23,8 +23,8 @@ Output file names are defined by xml parameters or execution options.
 
 sweep.xml sample:
 
-**<?xml version="1.0"?>
-<generate_sweep>
+**<?xml version="1.0"?>\
+<generate_sweep>\
   <params>
     <sample_rate>44100</sample_rate>
     <amplitude>0.5</amplitude>
