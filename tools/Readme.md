@@ -51,7 +51,7 @@ impulse.wav is the convolution result.
 
 ## 3. pca_analysis.py
 
-One of the main issues of Digital Room Correction is that speaker equalization algorithms are based of one single point sweep measurement with an omnidirectional microphone. This script is able to load several impulse responses, measured at different points in the room,and calculate a new impulse response which is the main component of a [Principal Component Analysis](https://en.wikipedia.org/wiki/Principal_component_analysis) (PCA) performed over all the impulses responses. The loaded impulse response set should be measured around a small area of interest (p.e. about 0.5 x 0.5 meters around one or two listening points). 
+One of the main issues of Digital Room Correction is that speaker equalization algorithms are based of one single point sweep measurement with an omnidirectional microphone. This script is able to load several impulse responses, measured at different points in the room, and calculates a new impulse response which is the main component of a [Principal Component Analysis](https://en.wikipedia.org/wiki/Principal_component_analysis) (PCA) performed over all the impulses responses. The loaded impulse response set should be measured around a small area of interest (p.e. about 0.5 x 0.5 meters around one or two listening points). 
 
 Let's see a sample about how to use pca_analysis.py:
 
@@ -105,8 +105,8 @@ pca_analysis.py Usage:
 
 where:
 - impulses_dir is a directory where all impulse response measurements are saved, each one is a wav format file. Every impulse should have the same sample rate.
-- PCA_dir is a directory where all the components resulting of the PCA analysis are saved after calculation. Principal component is PCA_1.wav. 
-- analysis_dir is a directory where all the final analysis plots are saved. For analysis purpose.
+- PCA_dir is a directory where all the components resulting of the PCA analysis will be saved after calculation. Principal component is PCA_1.wav. 
+- analysis_dir is a directory where all the final impulse and spectrum plots are saved, for analysis purpose.
 
 PCA_1.wav is the impulse response we can input to pyDRC for final DRC filter calculation.
 
