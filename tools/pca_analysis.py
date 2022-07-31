@@ -50,7 +50,7 @@ def PCA(DataFileList, PCA_dir, analysis_dir):
         ax2.set_ylabel("dB", fontsize = 9)
         ax2.grid(True)
         
-        ax1.plot(numpy.linspace(0, len(DataArray[i]), len(DataArray[i])),DataArray[i]/DataArray[i].max(),linewidth=0.4)
+        ax1.plot(numpy.linspace(0, len(DataArray[i]), len(DataArray[i])),DataArray[i]/numpy.abs(DataArray[i]).max(),linewidth=0.4)
         ax1.set_xlim(xmin=0,xmax=1000)
         ax1.set_ylim(ymin=-1.2,ymax=1.2)
         ax1.tick_params(axis='x', labelsize=9)
@@ -103,7 +103,7 @@ def PCA(DataFileList, PCA_dir, analysis_dir):
     ax2.set_ylabel("dB", fontsize = 9)
     ax2.grid(True)
     
-    ax1.plot(numpy.linspace(0, len(ResultArray[0]), len(ResultArray[0])),ResultArray[0]/ResultArray[0].max(),linewidth=0.4)
+    ax1.plot(numpy.linspace(0, len(ResultArray[0]), len(ResultArray[0])),ResultArray[0]/numpy.abs(ResultArray[0]).max(),linewidth=0.4)
     ax1.set_xlim(xmin=0,xmax=1000)
     ax1.set_ylim(ymin=-1.2,ymax=1.2)
     ax1.tick_params(axis='x', labelsize=9)
