@@ -93,7 +93,7 @@ After running pca_analysis over this set of measurements, the PCA principal comp
 
 ![PCA principal component](sample_plots/Spectrum_PCA_principal.png)
 
-And the frequency spectra of all the 8 components resulting of PCA analysis is (Hz in the x-axis, dB in the y-axis):
+And the frequency spectra of all the 8 components resulting of PCA analysis is (Hz in the x-axis, dB in the y-axis, amplitude values are each normalized to max. value):
 
 ![PCA component_spectra](sample_plots/spectrum_PCA.png)
 
@@ -115,4 +115,7 @@ These scripts need the following python modules:
 - pyDRC 
 - numpy
 - matplotlib
+
+Currently (I don't know why) pca_anaylis.py only runs on python2.7, not in python 3.x. Still investigating the reasons behind...
+
 
