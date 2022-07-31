@@ -6,4 +6,4 @@
  
  Script usage is simple:
  
- 'python sweepgen.py sweep.xml [-s sweep_filename] [-i inverse_filename]'
+ `python sweepgen.py sweep.xml [-s sweep_filename] [-i inverse_filename]`
