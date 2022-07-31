@@ -58,29 +58,35 @@ Let's see a sample about how to use pca_analysis.py:
 We have 8 different measurements over a small listening area:
 
 - Impulse response 1:
-- 
+
 ![Medida 1](sample_plots/impulse_spectrum_impulse_sweep_left_01.wav.png)
 
 - Impulse response 2:
-- 
+
 ![Medida 2](sample_plots/impulse_spectrum_impulse_sweep_left_02.wav.png)
 
-Impulse response 3:
+- Impulse response 3:
+
 ![Medida 3](sample_plots/impulse_spectrum_impulse_sweep_left_03.wav.png)
 
-Impulse response 4:
+- Impulse response 4:
+
 ![Medida 4](sample_plots/impulse_spectrum_impulse_sweep_left_04.wav.png)
 
-Impulse response 5:
+- Impulse response 5:
+
 ![Medida 5](sample_plots/impulse_spectrum_impulse_sweep_left_05.wav.png)
 
-Impulse response 6:
+- Impulse response 6:
+
 ![Medida 6](sample_plots/impulse_spectrum_impulse_sweep_left_06.wav.png)
 
-Impulse response 7:
+- Impulse response 7:
+
 ![Medida 7](sample_plots/impulse_spectrum_impulse_sweep_left_07.wav.png)
 
-Impulse response 8:
+- Impulse response 8:
+
 ![Medida 8](sample_plots/impulse_spectrum_impulse_sweep_left_08.wav.png)
 
 After running pca_analysis over this set of measurements, the PCA principal component is:
