@@ -7,3 +7,36 @@
  Script usage is simple:
  
  `python sweepgen.py sweep.xml [-s sweep_filename] [-i inverse_filename]`
+
+sweep.xml is an xml file with sweep generation parameters. A sweep.xml sample is provided. Parameters:
+
+sample_rate: sweep wav sample rate in Hz.
+Amplitude: sweep peak amplitude (max. value 1)
+Hzstart: sweep starting frequency in Hz
+HZend: sweep ending frequency in Hz
+length: sweep duration in seconds
+silence: intial and final silence length
+leadin: initial amplitude increase period
+leadout: final amplitude decrease period 
+
+Output file names are defined by xml parameters or execution options.
+
+sweep.xml sample:
+
+***
+<?xml version="1.0"?>
+<generate_sweep>
+  <params>
+    <sample_rate>44100</sample_rate>
+    <amplitude>0.5</amplitude>
+    <Hzstart>20</Hzstart>
+    <Hzend>20000</Hzend>
+    <length>6</length>
+    <silence>3</silence>
+    <leadin>0.05</leadin>
+    <leadout>0.005</leadout>
+  </params>
+  <sweep_filename>sweep_02.wav</sweep_filename>
+  <inverse_filename>inverse_02.wav</inverse_filename>
+</generate_sweep>
+***
