@@ -10,14 +10,14 @@
 
 sweep.xml is an xml file with sweep generation parameters. A sweep.xml sample is provided. Parameters:
 
-sample_rate: sweep wav sample rate in Hz.
-Amplitude: sweep peak amplitude (max. value 1)
-Hzstart: sweep starting frequency in Hz
-HZend: sweep ending frequency in Hz
-length: sweep duration in seconds
-silence: intial and final silence length
-leadin: initial amplitude increase period
-leadout: final amplitude decrease period 
+- sample_rate: sweep wav sample rate in Hz.
+- Amplitude: sweep peak amplitude (max. value 1)
+- Hzstart: sweep starting frequency in Hz
+- HZend: sweep ending frequency in Hz
+- length: sweep duration in seconds
+- silence: intial and final silence length
+- leadin: initial amplitude increase period
+- leadout: final amplitude decrease period 
 
 Output file names are defined by xml parameters or execution options.
 
