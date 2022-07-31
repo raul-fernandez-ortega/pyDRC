@@ -103,7 +103,7 @@ bool SND_WriteSignal(const char * FName,const STLvectorReal Src,const unsigned i
   SF_INFO sf_info;
   int short_mask;
   unsigned int I, J, SSize = Src.size();
-    
+  
   if (SSize < WStart)
     return false;
   
@@ -139,14 +139,12 @@ bool SND_WriteSignal(const char * FName,const STLvectorReal Src,const unsigned i
       break;
     }
   sf_info.format = SF_FORMAT_WAV | short_mask;
-
-  printf("Hola");
   
   if((sf_file = sf_open(FName, SFM_WRITE, &sf_info)) == NULL) {
     fprintf(stderr, "cannot open sndfile \"%s\" for output (%s)\n",FName, sf_strerror(sf_file));
     return false;
   }
-  printf("Hola2");
+  
   sf_writef_double(sf_file, Dst, WLen);
   sf_close(sf_file);
   return true;
@@ -355,9 +353,9 @@ bool GlSweep(DLReal Rate, DLReal Amplitude, DLReal HzStart, DLReal HzEnd, DLReal
   printf("\nSweep length: %d samples\n",SweepLen);
   printf("Silence length: %d samples\n",SilenceLen);
   printf("Total sweep length: %d samples\n",2 * SilenceLen + SweepLen);
-  printf("Total sweep file size: %lu bytes\n",sizeof(float) * (2 * SilenceLen + SweepLen));
+  printf("Total sweep file size: %u bytes\n",sizeof(float) * (2 * SilenceLen + SweepLen));
   printf("Total inverse length: %d samples\n",SweepLen);
-  printf("Total inverse file size: %lu bytes\n\n",sizeof(float) * SweepLen);
+  printf("Total inverse file size: %u bytes\n\n",sizeof(float) * SweepLen);
   fflush(stdout);
   
   /* Generates the sweep file */

@@ -11,7 +11,8 @@ def my_init_posix():
     save_init_posix()
     g = sysconfig._config_vars
     g['CC'] = 'g++'
-    g['LDSHARED'] = 'g++ -shared -Xlinker'
+    #g['LDSHARED'] = 'g++ -shared -Xlinker'
+    g['LDSHARED'] = 'g++ -pthread -shared -Wl,-O1 -Wl,-Bsymbolic-functions'
     g['CFLAGS']='-fno-strict-aliasing -DNDEBUG -O2 -Wall -Wno-maybe-uninitialized -Wno-pointer-arith'
     g['OPT']='-DNDEBUG -O2 -Wall -Wno-maybe-uninitialized -Wno-pointer-arith'
 
