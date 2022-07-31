@@ -8,8 +8,6 @@ import numpy
 import array
 import pyDRC
 import matplotlib.pyplot as plt
-
-DefaultOutputDir = "/home/raul/acustica/panning/output2"
      
 def PCA(DataFileList, PCA_dir, analysis_dir):
     PreWindowGap = 192
