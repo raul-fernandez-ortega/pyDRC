@@ -93,7 +93,9 @@ After running pca_analysis over this set of measurements, the PCA principal comp
 
 ![PCA principal component](sample_plots/Spectrum_PCA_principal.png)
 
-And the frequency spectra of all the 8 components resulting of PCA analysis is (Hz in the x-axis, dB in the y-axis, amplitude values are each normalized to max. value):
+As can be seen, PCA removes high frequency component of acoustic reflexions, maintaining the speaker response contribution that is common to all measurements. The high frequency spectrum dispersion is strongly reduced, while keeping the low frequency room efects. Dip effects were reduced.
+
+The frequency spectra of all the 8 components resulting of PCA analysis are (Hz in the x-axis, dB in the y-axis, amplitude values are each normalized to max. value):
 
 ![PCA component_spectra](sample_plots/spectrum_PCA.png)
 
@@ -103,10 +105,10 @@ pca_analysis.py Usage:
 
 where:
 - impulses_dir is a directory where all impulse response measurements are saved, each one is a wav format file. Every impulse should have the same sample rate.
-- PCA_dir is a directory where all the components resulting of the PCA analysis are saved after calculation. Principal component is PCA_1.wav.
+- PCA_dir is a directory where all the components resulting of the PCA analysis are saved after calculation. Principal component is PCA_1.wav. 
 - analysis_dir is a directory where all the final analysis plots are saved. For analysis purpose.
 
-PCA_1.wav is teh impulse response we can input to pyDRC for final DRC filter calculation.
+PCA_1.wav is the impulse response we can input to pyDRC for final DRC filter calculation.
 
 ## 4. Software needed
 
