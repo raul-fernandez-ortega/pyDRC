@@ -23,7 +23,7 @@ Output file names are defined by xml parameters or execution options.
 
 sweep.xml sample:
 
-***
+**
 <?xml version="1.0"?>
 <generate_sweep>
   <params>
@@ -39,4 +39,4 @@ sweep.xml sample:
   <sweep_filename>sweep_02.wav</sweep_filename>
   <inverse_filename>inverse_02.wav</inverse_filename>
 </generate_sweep>
-***
+**
