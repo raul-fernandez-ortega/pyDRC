@@ -55,12 +55,12 @@ One of the main issues of Digital Room Correction is that speaker equalization a
 
 Let's see a sample about how to use pca_analysis.py:
 
-- We have 8 different measurements over a small listening area:
+We have 8 different measurements over a small listening area:
 
-Impulse response 1:
+- Impulse response 1:
 ![Medida 1](sample_plots/impulse_spectrum_impulse_sweep_left_01.wav.png)
 
-Impulse response 2:
+- Impulse response 2:
 ![Medida 2](sample_plots/impulse_spectrum_impulse_sweep_left_02.wav.png)
 
 Impulse response 3:
@@ -85,6 +85,6 @@ After running pca_analysis over this set of measurements, the PCA principal comp
 
 ![PCA principal component](sample_plots/Spectrum_PCA_principal.png)
 
-And teh frequency spectra of all the 8 components resulting of PCA analysis is:
+And the frequency spectra of all the 8 components resulting of PCA analysis is:
 
 ![PCA component_spectra](sample_plots/spectrum_PCA.png)
