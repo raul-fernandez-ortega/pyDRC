@@ -41,7 +41,7 @@ sweep.xml sample:
 </generate_sweep>
 ```
 
-## 2.lsconv.py
+## 2. lsconv.py
 
 This script convolves a measured sweep signal with teh corresponding inverse signal geneating the acoustic impulse response. Script usage is simple:
 
@@ -49,4 +49,6 @@ This script convolves a measured sweep signal with teh corresponding inverse sig
 
 impulse.wav is the convolution result.
 
+## 3. pca_analysis.py
 
+One of the main issues of Digital Room Correction is that speaker equalization algorithms are based of one single point sweep measurement with an omnidirectional microphone. This script is able to load several impulse responses, measured at different points in the room,and calculate a new impulse response which is the main component of a [Principal Component Analysis](https://en.wikipedia.org/wiki/Principal_component_analysis) (PCA) performed over al the impulses responses.
