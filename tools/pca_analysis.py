@@ -49,8 +49,11 @@ def PCA(DataFileList, PCA_dir, analysis_dir):
         ax2.set_xlabel("Frequency Hz", fontsize = 9)
         ax2.set_ylabel("dB", fontsize = 9)
         ax2.grid(True)
-        
-        ax1.plot(numpy.linspace(0, len(DataArray[i]), len(DataArray[i])),DataArray[i]/numpy.abs(DataArray[i]).max(),linewidth=0.4)
+
+        if DataArray[i].max() == numpy.abs(DataArray[i]).max():
+            ax1.plot(numpy.linspace(0, len(DataArray[i]), len(DataArray[i])),DataArray[i]/numpy.abs(DataArray[i]).max(),linewidth=0.4)
+        else:
+            ax1.plot(numpy.linspace(0, len(DataArray[i]), len(DataArray[i])),-1.0*DataArray[i]/numpy.abs(DataArray[i]).max(),linewidth=0.4)        
         ax1.set_xlim(xmin=0,xmax=1000)
         ax1.set_ylim(ymin=-1.2,ymax=1.2)
         ax1.tick_params(axis='x', labelsize=9)
@@ -79,7 +82,10 @@ def PCA(DataFileList, PCA_dir, analysis_dir):
     maxvalue = 0
     for i in range(Size):
         maxvalue = max(maxvalue,max(ResultArray[i]))
-        pyDRC.WriteSignal('%s/PCA_%d.wav'%(PCA_dir, i+1),numpy.concatenate((numpy.zeros(len(ResultArray[i])),ResultArray[i])),0,2*len(ResultArray[i]), SampleRate,'F')
+        if ResultArray[0].max() == numpy.abs(ResultArray[0]).max():
+            pyDRC.WriteSignal('%s/PCA_%d.wav'%(PCA_dir, i+1),numpy.concatenate((numpy.zeros(len(ResultArray[i])),ResultArray[i])),0,2*len(ResultArray[i]), SampleRate,'F')
+        else:
+            pyDRC.WriteSignal('%s/PCA_%d.wav'%(PCA_dir, i+1),numpy.concatenate((numpy.zeros(len(ResultArray[i])),-1.0*ResultArray[i])),0,2*len(ResultArray[i]), SampleRate,'F')
     for i in range(Size):
         ResultArray[i] /= (2*maxvalue)
         plt.subplot(330+i+1)
@@ -102,8 +108,11 @@ def PCA(DataFileList, PCA_dir, analysis_dir):
     ax2.set_xlabel("Frequency Hz", fontsize = 9)
     ax2.set_ylabel("dB", fontsize = 9)
     ax2.grid(True)
-    
-    ax1.plot(numpy.linspace(0, len(ResultArray[0]), len(ResultArray[0])),ResultArray[0]/numpy.abs(ResultArray[0]).max(),linewidth=0.4)
+
+    if ResultArray[0].max() == numpy.abs(ResultArray[0]).max():
+        ax1.plot(numpy.linspace(0, len(ResultArray[0]), len(ResultArray[0])),ResultArray[0]/numpy.abs(ResultArray[0]).max(),linewidth=0.4)
+    else:
+        ax1.plot(numpy.linspace(0, len(ResultArray[0]), len(ResultArray[0])),-1.*ResultArray[0]/numpy.abs(ResultArray[0]).max(),linewidth=0.4)
     ax1.set_xlim(xmin=0,xmax=1000)
     ax1.set_ylim(ymin=-1.2,ymax=1.2)
     ax1.tick_params(axis='x', labelsize=9)
@@ -112,7 +121,7 @@ def PCA(DataFileList, PCA_dir, analysis_dir):
     ax1.set_ylabel("Amplitude (normalized)", fontsize = 9)
     ax1.grid(True)
     plt.savefig("%s/Spectrum_PCA_principal.png"%(analysis_dir))
-    pyDRC.WriteSignal('%s/filtered_data__%s.wav'%(analysis_dir,DataFileList[i].split("/")[-1]),DataArray[i],0,dataLength,SampleRate,'F')
+       
     
 def main():
     impulse_dir ="."
