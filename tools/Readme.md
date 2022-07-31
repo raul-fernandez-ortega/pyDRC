@@ -10,7 +10,7 @@
 
 sweep.xml is an xml file with sweep generation parameters. A sweep.xml sample is provided. Parameters:
 
-- sample_rate: sweep wav sample rate in Hz.
+- sample_rate: sweep wav sample rate in Hz
 - Amplitude: sweep peak amplitude (max. value 1)
 - Hzstart: sweep starting frequency in Hz
 - HZend: sweep ending frequency in Hz
@@ -40,5 +40,13 @@ sweep.xml sample:
   <inverse_filename>inverse_02.wav</inverse_filename>
 </generate_sweep>
 ```
+
+## 2.lsconv.py
+
+This script convolves a measured sweep signal with teh corresponding inverse signal geneating the acoustic impulse response. Script usage is simple:
+
+`python lsconv.py measurement.wav inverse.wav impulse.wav`
+
+impulse.wav is the convolution result.
 
 
