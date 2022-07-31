@@ -51,4 +51,4 @@ impulse.wav is the convolution result.
 
 ## 3. pca_analysis.py
 
-One of the main issues of Digital Room Correction is that speaker equalization algorithms are based of one single point sweep measurement with an omnidirectional microphone. This script is able to load several impulse responses, measured at different points in the room,and calculate a new impulse response which is the main component of a [Principal Component Analysis](https://en.wikipedia.org/wiki/Principal_component_analysis) (PCA) performed over al the impulses responses.
+One of the main issues of Digital Room Correction is that speaker equalization algorithms are based of one single point sweep measurement with an omnidirectional microphone. This script is able to load several impulse responses, measured at different points in the room,and calculate a new impulse response which is the main component of a [Principal Component Analysis](https://en.wikipedia.org/wiki/Principal_component_analysis) (PCA) performed over all the impulses responses. The loaded impulse response set should be measured around a small area of interest (p.e. about 0.5 x 0.5 meters around one or two listening points). 
