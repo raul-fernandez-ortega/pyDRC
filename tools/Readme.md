@@ -2,7 +2,7 @@
  
  ## 1. sweepgen.py
  
- sweepgen.py is a python script for sweep and inverse signals generation. Sweep signal should be used for measurement, while inverse signal is used for convolving with sweep acoustic measurements obtaining the impulse response we need for digital filtering/equalizacion.
+sweepgen.py is a python script for sweep and inverse signals generation. Sweep signal should be used for measurement, while inverse signal is used for convolving with sweep acoustic measurements obtaining the impulse response needed for digital filtering/equalizacion.
  
  Script usage is simple:
  
@@ -19,7 +19,7 @@ sweep.xml is an xml file with sweep generation parameters. A sweep.xml sample is
 - leadin: initial amplitude increase period
 - leadout: final amplitude decrease period 
 
-Output file names are defined by xml parameters or execution options.
+Output file names are defined by xml parameters or execution options. Execution options have preference.
 
 sweep.xml sample:
 
@@ -41,9 +41,11 @@ sweep.xml sample:
 </generate_sweep>
 ```
 
+The sweep file can be used for measurement, p.e. in [Audacity](https://www.audacityteam.org/)
+
 ## 2. lsconv.py
 
-This script convolves a measured sweep signal with teh corresponding inverse signal geneating the acoustic impulse response. Script usage is simple:
+This script convolves a measured sweep signal with the corresponding inverse signal geneating the acoustic impulse response. Script usage is simple:
 
 `python lsconv.py measurement.wav inverse.wav impulse.wav`
 
@@ -51,43 +53,47 @@ impulse.wav is the convolution result.
 
 ## 3. pca_analysis.py
 
-One of the main issues of Digital Room Correction is that speaker equalization algorithms are based of one single point sweep measurement with an omnidirectional microphone. This script is able to load several impulse responses, measured at different points in the room, and calculates a new impulse response which is the main component of a [Principal Component Analysis](https://en.wikipedia.org/wiki/Principal_component_analysis) (PCA) performed over all the impulses responses. The loaded impulse response set should be measured around a small area of interest (p.e. about 0.5 x 0.5 meters around one or two listening points). 
+One of the main issues of Digital Room Correction is that speaker equalization algorithms are based of one single point sweep measurement with an omnidirectional microphone. This restriction entails that Digital Room Correction can only be applied to one point in space. There are several proposal for calculating a new impulse response o new spectrum from more than one point in a room or space, trying to equalize a listening area. 
+
+By using [Principal Component Analysis](https://en.wikipedia.org/wiki/Principal_component_analysis) (PCA) technique applied over several impulse responses measured inside a limited space in a room, this script computes a new impulse response than could be representative of a listening area.
+
+This script is able to load several impulse responses, measured at different points in the room, and calculates a new impulse response which is the main component of a PCA performed over all the impulses responses. The loaded impulse response set should be measured around a small area of interest (p.e. about 0.5 x 0.5 meters around one or two listening points). 
 
 Let's see a sample about how to use pca_analysis.py:
 
-We have 8 different measurements over a small listening area:
+We have 8 different measurements over a typical listening area:
 
 - Impulse response 1:
 
-![Medida 1](sample_plots/impulse_spectrum_impulse_sweep_left_01.wav.png)
+![Impulse 1](sample_plots/impulse_spectrum_impulse_sweep_left_01.wav.png)
 
 - Impulse response 2:
 
-![Medida 2](sample_plots/impulse_spectrum_impulse_sweep_left_02.wav.png)
+![Impulse 2](sample_plots/impulse_spectrum_impulse_sweep_left_02.wav.png)
 
 - Impulse response 3:
 
-![Medida 3](sample_plots/impulse_spectrum_impulse_sweep_left_03.wav.png)
+![Impulse 3](sample_plots/impulse_spectrum_impulse_sweep_left_03.wav.png)
 
 - Impulse response 4:
 
-![Medida 4](sample_plots/impulse_spectrum_impulse_sweep_left_04.wav.png)
+![Impulse 4](sample_plots/impulse_spectrum_impulse_sweep_left_04.wav.png)
 
 - Impulse response 5:
 
-![Medida 5](sample_plots/impulse_spectrum_impulse_sweep_left_05.wav.png)
+![Impulse 5](sample_plots/impulse_spectrum_impulse_sweep_left_05.wav.png)
 
 - Impulse response 6:
 
-![Medida 6](sample_plots/impulse_spectrum_impulse_sweep_left_06.wav.png)
+![Impulse 6](sample_plots/impulse_spectrum_impulse_sweep_left_06.wav.png)
 
 - Impulse response 7:
 
-![Medida 7](sample_plots/impulse_spectrum_impulse_sweep_left_07.wav.png)
+![Impulse 7](sample_plots/impulse_spectrum_impulse_sweep_left_07.wav.png)
 
 - Impulse response 8:
 
-![Medida 8](sample_plots/impulse_spectrum_impulse_sweep_left_08.wav.png)
+![Impulse 8](sample_plots/impulse_spectrum_impulse_sweep_left_08.wav.png)
 
 After running pca_analysis over this set of measurements, the PCA principal component is:
 
@@ -116,7 +122,7 @@ These scripts need the following python modules:
 
 - pyDRC 
 - numpy
-- matplotlib
+- matplotlib (for analysis plots)
 
 Currently (I don't know why) pca_anaylis.py only runs on python2.7, not in python 3.x. Still investigating the reasons behind...
 
