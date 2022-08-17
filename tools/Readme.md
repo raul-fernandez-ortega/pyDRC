@@ -43,6 +43,19 @@ sweep.xml sample:
 
 The sweep file can be used for measurement, p.e. in [Audacity](https://www.audacityteam.org/)
 
+Using [ecasound](https://ecasound.seul.org/) for measurements:
+
+ecasound -t:**<time>** -a:1 -i sweep.wav -a:1 -o:jack_auto,system:**<playback_ch>** -a:2 -i:jack_auto,system:**<capture_ch>** -a:2 -f:f32_le,1,**<samplerate>** -o:**<measurement.wav>** -a:2 -ev
+
+Where:
+ - time: total sweep duration (s)
+ - playback_ch: jackd device output channel selected
+ - capture_ch: jackd microphone channel
+ - samplerate: sweep and jackd sample rate (Hz)
+ - measurement.wav: wav format file name for saving recording
+ 
+ This process is done in two chains, one for playback of sweep and another for recording from microphone.
+
 ## 2. lsconv.py
 
 This script convolves a measured sweep signal with the corresponding inverse signal geneating the acoustic impulse response. Script usage is simple:
