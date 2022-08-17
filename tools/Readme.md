@@ -78,45 +78,31 @@ We have 16 different measurements over a typical listening area:
 
 - Impulse response 1:
 
-![Impulse 1](sample_plots/impulse_spectrum_impulse_sweep_left_01.wav.png)
-
-- Impulse response 2:
-
-![Impulse 2](sample_plots/impulse_spectrum_impulse_sweep_left_02.wav.png)
-
-- Impulse response 3:
-
-![Impulse 3](sample_plots/impulse_spectrum_impulse_sweep_left_03.wav.png)
-
-- Impulse response 4:
-
-![Impulse 4](sample_plots/impulse_spectrum_impulse_sweep_left_04.wav.png)
-
-- Impulse response 5:
-
-![Impulse 5](sample_plots/impulse_spectrum_impulse_sweep_left_05.wav.png)
-
-- Impulse response 6:
-
-![Impulse 6](sample_plots/impulse_spectrum_impulse_sweep_left_06.wav.png)
-
-- Impulse response 7:
-
-![Impulse 7](sample_plots/impulse_spectrum_impulse_sweep_left_07.wav.png)
-
-- Impulse response 8:
-
-![Impulse 8](sample_plots/impulse_spectrum_impulse_sweep_left_08.wav.png)
+![Impulse 1](aux_plots/no_eq_left/impulse_spectrum_0.png)
+![Impulse 2](aux_plots/no_eq_left/impulse_spectrum_1.png)
+![Impulse 3](aux_plots/no_eq_left/impulse_spectrum_2.png)
+![Impulse 4](aux_plots/no_eq_left/impulse_spectrum_3.png)
+![Impulse 5](aux_plots/no_eq_left/impulse_spectrum_4.png)
+![Impulse 6](aux_plots/no_eq_left/impulse_spectrum_5.png)
+![Impulse 7](aux_plots/no_eq_left/impulse_spectrum_6.png)
+![Impulse 8](aux_plots/no_eq_left/impulse_spectrum_7.png)
 
 After running pca_analysis over this set of measurements, the PCA principal component is:
 
-![PCA principal component](sample_plots/Spectrum_PCA_principal.png)
+![PCA principal component](saux_plots/no_eq_left/Spectrum_PCA_principal.png)
 
 As can be seen, PCA removes high frequency component of acoustic reflexions, maintaining the speaker response contribution that is common to all measurements. The high frequency spectrum dispersion is strongly reduced, while keeping the low frequency room efects. Dip effects were reduced.
 
-The frequency spectra of all the 8 components resulting of PCA analysis are (Hz in the x-axis, dB in the y-axis, each component spectrum is normalized to max. value):
+The frequency spectra of all the 16 components resulting of PCA analysis are (Hz in the x-axis, dB in the y-axis, each component spectrum is normalized to max. value):
 
-![PCA component_spectra](sample_plots/spectrum_PCA.png)
+![Impulse 1](aux_plots/no_eq_left/PCA_spectrum_0.png)
+![Impulse 2](aux_plots/no_eq_left/PCA_spectrum_1.png)
+![Impulse 3](aux_plots/no_eq_left/PCA_spectrum_2.png)
+![Impulse 4](aux_plots/no_eq_left/PCA_spectrum_3.png)
+![Impulse 5](aux_plots/no_eq_left/PCA_spectrum_4.png)
+![Impulse 6](aux_plots/no_eq_left/PCA_spectrum_5.png)
+![Impulse 7](aux_plots/no_eq_left/PCA_spectrum_6.png)
+![Impulse 8](aux_plots/no_eq_left/PCA_spectrum_7.png)
 
 pca_analysis.py Usage:
 
