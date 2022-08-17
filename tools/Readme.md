@@ -66,15 +66,15 @@ impulse.wav is the convolution result.
 
 ## 3. pca_analysis.py
 
-One of the main issues of Digital Room Correction is that speaker equalization algorithms are based of one single point sweep measurement with an omnidirectional microphone. This restriction entails that Digital Room Correction can only be applied to one point in space. There are several proposal for calculating a new impulse response o new spectrum from more than one point in a room or space, trying to equalize a listening area. 
+One of the main problems of Digital Room Correction is that speaker equalization algorithms are based on one single point sweep measurement with an omnidirectional microphone. This restriction entails that Digital Room Correction can only be applied to one point in space. There are several proposal for calculating a new impulse response o new spectrum from more than one point in a room or space, trying to equalize a listening area. 
 
-By using [Principal Component Analysis](https://en.wikipedia.org/wiki/Principal_component_analysis) (PCA) technique applied over several impulse responses measured inside a limited space in a room, this script computes a new single impulse response than is representative of a listening area. PCA is a statistical technique used for dimension reduction of a problem, trying to keep the maximun information in the reduced solution. In our case we reduce several impulse responses to a single one. This asssumption will work if all the impulse responses are strongly correlated. The main source of correlation among our original impulse responses is that the speaker used in all the process is the same, hence the direct speaker contribution will appear on the principal component resulted from PCA. The different acoustic contributions from room reflections have low correlation at high frequencies but this correlation factor increase as frequency decrease. This correlation is a function of the distance between the different recorded points. 
+By using [Principal Component Analysis](https://en.wikipedia.org/wiki/Principal_component_analysis) (PCA) technique applied over several impulse responses measured inside a limited space in a room, this script computes a new single impulse response than is representative of a listening area. PCA is a statistical technique used for dimension reduction of a problem, trying to keep the maximun information in the reduced solution. In our case we reduce several impulse responses to a single one, the principal component. This asssumption will work if all the impulse responses are strongly correlated. The main source of correlation among our original impulse responses is that the same speaker is used in all the process, hence the direct speaker contribution will appear on the principal component resulted from PCA. The different acoustic contributions from room reflections have low correlation at high frequencies but this correlation factor increase as frequency decrease. This correlation is a function of the distance between the different recorded points. As equalization area increases, correlation between measurements decreases, therefore the equalization is less effective. 
 
 This script is able to load several impulse responses, measured at different points in the room, and calculates a new impulse response which is the main component of a PCA performed over all the impulses responses. The loaded impulse response set should be measured around a small area of interest (p.e. about 0.5 x 0.5 meters around one or two listening points). 
 
 Let's see a sample about how to use pca_analysis.py:
 
-We have 8 different measurements over a typical listening area:
+We have 16 different measurements over a typical listening area:
 
 - Impulse response 1:
 
