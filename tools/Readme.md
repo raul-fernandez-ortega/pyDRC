@@ -16,8 +16,8 @@ sweep.xml is an xml file with sweep generation parameters. A sweep.xml sample is
 - HZend: sweep ending frequency in Hz
 - length: sweep duration in seconds
 - silence: intial and final silence length
-- leadin: initial amplitude increase period
-- leadout: final amplitude decrease period 
+- leadin: initial amplitude increase period (fraction of total)
+- leadout: final amplitude decrease period (fraction of total)
 
 Output file names are defined by xml parameters or execution options. Execution options have preference.
 
