@@ -76,7 +76,7 @@ Let's see a sample about how to use pca_analysis.py:
 
 We have 16 different measurements over a typical listening area:
 
-- Impulse response 1:
+Impulse responses:
 
 ![Impulse 1](aux_plots/no_eq_left/impulse_spectrum_0.png) ![Impulse 2](aux_plots/no_eq_left/impulse_spectrum_1.png) 
 ![Impulse 3](aux_plots/no_eq_left/impulse_spectrum_2.png) ![Impulse 4](aux_plots/no_eq_left/impulse_spectrum_3.png) 
@@ -99,6 +99,19 @@ The frequency spectra of all the 16 components resulting of PCA analysis are (Hz
 ![Impulse 6](aux_plots/no_eq_left/PCA_spectrum_5.png)
 ![Impulse 7](aux_plots/no_eq_left/PCA_spectrum_6.png)
 ![Impulse 8](aux_plots/no_eq_left/PCA_spectrum_7.png)
+
+After calculating equalizating using pyDRC, and applying to the audio system, we measure again another 16 points in the listening area, to see the equalization results. These points are not exactly the same as in the first step, but in the same area.
+
+Impulse responses:
+
+![Impulse 1](aux_plots/eq_left/impulse_spectrum_0.png) ![Impulse 2](aux_plots/eq_left/impulse_spectrum_1.png) 
+![Impulse 3](aux_plots/eq_left/impulse_spectrum_2.png) ![Impulse 4](aux_plots/eq_left/impulse_spectrum_3.png) 
+![Impulse 5](aux_plots/eq_left/impulse_spectrum_4.png) ![Impulse 6](aux_plots/eq_left/impulse_spectrum_5.png) 
+![Impulse 7](aux_plots/eq_left/impulse_spectrum_6.png) ![Impulse 8](aux_plots/eq_left/impulse_spectrum_7.png) 
+
+After running pca_analysis over this set of measurements, the PCA principal component is:
+
+![PCA principal component](aux_plots/eq_left/Spectrum_PCA_principal.png)
 
 pca_analysis.py Usage:
 
