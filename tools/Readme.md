@@ -109,9 +109,11 @@ Impulse responses:
 ![Impulse 5](aux_plots/eq_left/impulse_spectrum_4.png) ![Impulse 6](aux_plots/eq_left/impulse_spectrum_5.png) 
 ![Impulse 7](aux_plots/eq_left/impulse_spectrum_6.png) ![Impulse 8](aux_plots/eq_left/impulse_spectrum_7.png) 
 
-After running pca_analysis over this set of measurements, the PCA principal component is:
+The spectra are flatten than before equalization. After running pca_analysis over the new set, the PCA principal component is:
 
 ![PCA principal component](aux_plots/eq_left/Spectrum_PCA_principal.png)
+
+which is much more flatter than the initial principal component result.
 
 pca_analysis.py Usage:
 
