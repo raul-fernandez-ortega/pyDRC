@@ -45,13 +45,13 @@ The sweep file can be used for measurement, p.e. in [Audacity](https://www.audac
 
 Using [ecasound](https://ecasound.seul.org/) for measurements:
 
-ecasound -t:**<sweep_time>** -a:1 -i sweep.wav -a:1 -o:jack_auto,system:**<playback_ch>** -a:2 -i:jack_auto,system:**<capture_ch>** -a:2 -f:f32_le,1,**<samplerate>** -o:**<measurement.wav>** -a:2 -ev
+ecasound -t:**<sweep_time>** -a:1 -i sweep.wav -a:1 -o:jack_auto,system:**<playback_ch>** -a:2 -i:jack_auto,system:**<capture_ch>** -a:2 -f:f32_le,1,**<sample_rate>** -o:**<measurement.wav>** -a:2 -ev
 
 Where:
  - sweep_time: total sweep duration (s)
  - playback_ch: jackd device output channel selected
  - capture_ch: jackd microphone channel
- - samplerate: sweep and jackd sample rate (Hz)
+ - sample_rate: sweep and jackd sample rate (Hz)
  - measurement.wav: wav format file name for saving recording
  
  This process is done in two chains, one for playback of sweep and another for recording from microphone.
