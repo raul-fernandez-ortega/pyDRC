@@ -11,7 +11,7 @@ sweepgen.py is a python script for sweep and inverse signals generation. Sweep s
 sweep.xml is an xml file with sweep generation parameters. A sweep.xml sample is provided. Parameters:
 
 - sample_rate: sweep wav sample rate in Hz
-- Amplitude: sweep peak amplitude (max. value 1)
+- amplitude: sweep peak amplitude (max. value 1)
 - Hzstart: sweep starting frequency in Hz
 - HZend: sweep ending frequency in Hz
 - length: sweep duration in seconds
