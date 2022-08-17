@@ -85,7 +85,7 @@ We have 16 different measurements over a typical listening area:
 
 After running pca_analysis over this set of measurements, the PCA principal component is:
 
-![PCA principal component](saux_plots/no_eq_left/Spectrum_PCA_principal.png)
+![PCA principal component](aux_plots/no_eq_left/Spectrum_PCA_principal.png)
 
 As can be seen, PCA removes high frequency component of acoustic reflexions, maintaining the speaker response contribution that is common to all measurements. The high frequency spectrum dispersion is strongly reduced, while keeping the low frequency room efects. Dip effects were reduced.
 
