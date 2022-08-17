@@ -78,10 +78,10 @@ We have 16 different measurements over a typical listening area:
 
 - Impulse response 1:
 
-| ![Impulse 1](aux_plots/no_eq_left/impulse_spectrum_0.png) | ![Impulse 2](aux_plots/no_eq_left/impulse_spectrum_1.png) |
-| ![Impulse 3](aux_plots/no_eq_left/impulse_spectrum_2.png) | ![Impulse 4](aux_plots/no_eq_left/impulse_spectrum_3.png) |
-| ![Impulse 5](aux_plots/no_eq_left/impulse_spectrum_4.png) | ![Impulse 6](aux_plots/no_eq_left/impulse_spectrum_5.png) |
-| ![Impulse 7](aux_plots/no_eq_left/impulse_spectrum_6.png) | ![Impulse 8](aux_plots/no_eq_left/impulse_spectrum_7.png) |
+![Impulse 1](aux_plots/no_eq_left/impulse_spectrum_0.png) ![Impulse 2](aux_plots/no_eq_left/impulse_spectrum_1.png) 
+![Impulse 3](aux_plots/no_eq_left/impulse_spectrum_2.png) ![Impulse 4](aux_plots/no_eq_left/impulse_spectrum_3.png) 
+![Impulse 5](aux_plots/no_eq_left/impulse_spectrum_4.png) ![Impulse 6](aux_plots/no_eq_left/impulse_spectrum_5.png) 
+![Impulse 7](aux_plots/no_eq_left/impulse_spectrum_6.png) ![Impulse 8](aux_plots/no_eq_left/impulse_spectrum_7.png) 
 
 After running pca_analysis over this set of measurements, the PCA principal component is:
 
