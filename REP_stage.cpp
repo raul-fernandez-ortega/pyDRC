@@ -4,18 +4,16 @@ RMPstage::RMPstage(DRCSignal *InputSig, RMPParmsType InCfg)
 {
   Cfg = InCfg;
   InSig = InputSig;
-  MPSignal = new DRCSignal(*InputSig);
-  EPSignal = new DRCSignal(*InputSig);
-  process();
+  MPSignal = new DRCSignal(InputSig);
+  EPSignal = new DRCSignal(InputSig);
   Normalize(MPSignal, Cfg.MPPFNormFactor, Cfg.MPPFNormType);
   WriteSignal(MPSignal, Cfg.MPPFOutFile,  Cfg.MPPFOutFileType);
 }
 void RMPstage::NewInputSignal(DRCSignal *InputSig)
 {
   InSig = InputSig;
-  MPSignal = new DRCSignal(*InputSig);
-  EPSignal = new DRCSignal(*InputSig);
-  process();
+  MPSignal->setParams(InputSig);
+  EPSignal->setParams(InputSig);
   Normalize(MPSignal, Cfg.MPPFNormFactor, Cfg.MPPFNormType);
   WriteSignal(MPSignal, Cfg.MPPFOutFile,  Cfg.MPPFOutFileType);
 }
@@ -23,7 +21,6 @@ void RMPstage::NewInputSignal(DRCSignal *InputSig)
 void RMPstage::NewInCfg(RMPParmsType InCfg)
 {
   Cfg = InCfg;
-  process();
   Normalize(MPSignal, Cfg.MPPFNormFactor, Cfg.MPPFNormType);
   WriteSignal(MPSignal, Cfg.MPPFOutFile,  Cfg.MPPFOutFileType);
 }
@@ -35,13 +32,12 @@ void RMPstage::process(void)
   DLReal *MPSig;
   DLReal *MPEPSig;
 
-
   MPSignal->Signal.clear();
   EPSignal->Signal.clear();
-  MPPFSig = new DLReal[InSig->Signal.size()];
-  for(I = 0; I < InSig->Signal.size(); I++)
+  MPPFSig = new DLReal[InSig->Signal->size()];
+  for(I = 0; I < InSig->Signal->size(); I++)
     {
-      MPPFSig[I] = InSig->Signal[I];
+      MPPFSig[I] = InSig->Signal->at(I);
     }
   if (Cfg.MPHDRecover[0] == 'Y')
     {
@@ -104,7 +100,7 @@ void RMPstage::process(void)
 	BlackmanWindow(MPEPSig,InSig->WLen);
     }
   for(I=0; I < InSig->Signal.size(); I++)
-    MPSignal->Signal.push_back(MPPFSig[I]);
+    MPSignal->Signal->push_back(MPPFSig[I]);
   for(I=0; I < InSig->WLen; I++)
-    EPSignal->Signal.push_back(MPEPSig[I]);
+    EPSignal->Signal->push_back(MPEPSig[I]);
 }

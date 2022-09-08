@@ -37,6 +37,8 @@ class PSstage
   void NewInCfg(PSParmsType InCfg);
   ~PSstage() {};
   void process(void);
+  void Normalize(void);
+  void WriteOutput(void);
   PSParmsType getCfgParms(void) { return Cfg; };
   DRCSignal *getOutSig() { return OutSig; };
   DRCSignal *getOutF() { return PSOutF; };

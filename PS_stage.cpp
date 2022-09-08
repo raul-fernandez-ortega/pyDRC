@@ -6,20 +6,17 @@ PSstage::PSstage(DRCSignal *InputSig, PSParmsType InCfg)
   OutSig = new DRCSignal(*InputSig);
   PSOutF = new DRCSignal(*InputSig);
   Cfg = InCfg;
-  //process();
-
 }
 
 void PSstage::NewInputSignal(DRCSignal *InputSig)
 {
   InSig = InputSig;
-  //process();
+  OutSig->setParams(InputSig);
 }
 
 void PSstage::NewInCfg(PSParmsType InCfg)
 {
   Cfg = InCfg;
-  //process();
 }
 
 void PSstage::process(void)
@@ -38,8 +35,8 @@ void PSstage::process(void)
 
   //DRCSignal PSOutF;
 
-  OutSig->Data.clear();
-  PSOutF->Data.clear();
+  OutSig->Data->clear();
+  PSOutF->Data->clear();
   /* Verifica se si devono contare i punti filtro */
   if (Cfg.PSNumPoints == 0) {
     sputsp("Counting target response/mic compensation definition file points: ",Cfg.PSPointsFile);
@@ -192,9 +189,9 @@ void PSstage::process(void)
     //delete MPSig;
     break;
   }
-  InputS = new DLReal[InSig->Data.size()];
-  for (unsigned int K = 0; K < InSig->Data.size(); K++)
-    InputS[K] = InSig->Data[K];
+  InputS = new DLReal[InSig->Data->size()];
+  for (unsigned int K = 0; K < InSig->Data->size(); K++)
+    InputS[K] = InSig->Data->at(K);
   /* Convoluzione filtro segnale */
   sputs("Target response/mic compensation FIR Filter convolution...");
   if (FftwConvolve(&InputS[InSig->getWStart()],InSig->getWLen(),PSFilter, Cfg.PSFilterLen,PSOutSig) == false) {
@@ -300,17 +297,28 @@ void PSstage::process(void)
   PSOutF->setWStart(0);
   PSOutF->setWLen(OutSig->getWLen());
   for(I = 0; I < PSOutF->getWLen(); I++)
-    PSOutF->Data.push_back(PSFilter[I]);
+    PSOutF->getData()->push_back(PSFilter[I]);
   for(I = 0; I < PSOutSigLen; I++)
-    OutSig->Data.push_back(PSOutSig[I]);
-  
-  PSOutF->Normalize(Cfg.PSNormFactor, Cfg.PSNormType);
-  PSOutF->WriteSignal(Cfg.PSOutFile, Cfg.PSOutFileType);
+    OutSig->getData()->push_back(PSOutSig[I]);
 
   OutSig->setWLen(WLen3);
-  OutSig->setWStart(0);
+  OutSig->setWStart(0);  
+  //Normalize();
+  //WriteOutput();
+}
 
+void PSstage::Normalize(void)
+{
+  if (Cfg.PSNormFactor > 0) {
+    sputs("PS stage impulse normalization.");
+    PSOutF->Normalize(Cfg.PSNormFactor,Cfg.PSNormType);
+  }
+}
 
-  
-  
+void PSstage::WriteOutput(void)
+{
+  if (Cfg.PSOutFile != NULL) {
+    sputs("Saving PS stage impulse.");
+    PSOutF->WriteSignal(Cfg.PSOutFile, Cfg.PSOutFileType);
+  }
 }

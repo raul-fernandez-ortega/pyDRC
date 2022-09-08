@@ -3,30 +3,29 @@
 PLstage::PLstage(DRCSignal *InputSig, PLParmsType InCfg)
 {
   InSig = InputSig;
-  OutSig = new DRCSignal(*InputSig);
+  OutSig = new DRCSignal(InputSig);
   Cfg = InCfg;
-  //process();
-
 }
+
 void PLstage::NewInputSignal(DRCSignal *InputSig)
 {
   InSig = InputSig;
-  //process();
+  OutSig->setParams(InputSig);
 }
+
 void PLstage::NewInCfg(PLParmsType InCfg)
 {
   Cfg = InCfg;
-  //process();
 }
 
 void PLstage::process(void)
 {
   int I, J;
-  STLvectorReal BufSig;
+  STLvectorReal *BufSig = new STLvectorReal();
 
   OutSig->clearData();
   for(I = InSig->getWStart(); I <  InSig->getWLen(); I++)
-      BufSig.push_back(InSig->Data[I]);
+    BufSig->push_back(InSig->getData()->at(I));
 
   if (Cfg.PLMaxGain > 0)
     {
@@ -67,7 +66,24 @@ void PLstage::process(void)
       STL_BlackmanWindow(BufSig,OutSig->getWStart(),OutSig->getWLen());
     }
   for(J=0; J < OutSig->getWStart() + OutSig->getWLen(); J++)
-    OutSig->Data.push_back(BufSig[J]);
-  OutSig->Normalize(Cfg.PLNormFactor, Cfg.PLNormType);
-  OutSig->WriteSignal(Cfg.PLOutFile, Cfg.PLOutFileType);
+    OutSig->Data->push_back(BufSig->at(J));
+
+  //Normalize();
+  //WriteOutput();
+}
+
+void PLstage::Normalize(void)
+{
+  if (Cfg.PLNormFactor > 0) {
+    sputs("PL stage impulse normalization.");
+    OutSig->Normalize(Cfg.PLNormFactor,Cfg.PLNormType);
+  }
+}
+
+void PLstage::WriteOutput(void)
+{
+  if (Cfg.PLOutFile != NULL) {
+    sputs("Saving PL stage impulse.");
+    OutSig->WriteSignal(Cfg.PLOutFile, Cfg.PLOutFileType);
+  }
 }

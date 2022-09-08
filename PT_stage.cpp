@@ -3,23 +3,21 @@
 PTstage::PTstage(DRCSignal *InputSig, DRCSignal *RefSignal, PTParmsType InCfg)
 {
   InSig = InputSig;
-  OutSig = new DRCSignal(*InputSig);
+  OutSig = new DRCSignal(InputSig);
   RefSig = RefSignal;
   Cfg = InCfg;
-  //process();
 }
 
 void PTstage::NewInputSignal(DRCSignal *InputSig,  DRCSignal *RefSignal)
 {
   InSig = InputSig;
   RefSig = RefSignal;
-  //process();
+  OutSig->setParams(InputSig);
 }
 
 void PTstage::NewInCfg(PTParmsType InCfg)
 {
   Cfg = InCfg;
-  //process();
 }
 
 int PTstage::process(void)
@@ -33,8 +31,8 @@ int PTstage::process(void)
   DLReal * PTTConv;
   DLReal * PTFilter;
   DLReal * ISRevOut;
-  STLvectorReal buf;
-  STLvectorReal buf2;
+  //STLvectorReal buf;
+  STLvectorReal *buf = new STLvectorReal;
   
   OutSig->clearData();
   
@@ -50,23 +48,22 @@ int PTstage::process(void)
       sputs("Memory allocation failed.");
       return 1;
     }
-    OInSig = new DLReal[RefSig->getData().size()];
+    OInSig = new DLReal[RefSig->getData()->size()];
     if (OInSig == NULL) {
       sputs("Memory allocation failed.");
       return 1;
     }
-    buf = RefSig->getData();
-    for(I=0; I < buf.size(); I++)
-      OInSig[I] = buf[I];
+    for(I=0; I < RefSig->getData()->size(); I++)
+      OInSig[I] = RefSig->getData()->at(I);
     
-    ISRevOut = new DLReal[InSig->getData().size()];
+    ISRevOut = new DLReal[InSig->getData()->size()];
     if (ISRevOut == NULL) {
       sputs("Memory allocation failed.");
       return 1;
     }	
-    buf = InSig->getData();
-    for(I = 0; I < buf.size(); I++)
-      ISRevOut[I] = buf[I];
+    //buf = InSig->getData();
+    for(I = 0; I < InSig->getData()->size(); I++)
+      ISRevOut[I] = InSig->getData()->at(I);
     
     /* Effettua la convoluzione tra filtro e risposta */
     sputs("Psychoacoustic target reference convolution...");
@@ -78,8 +75,8 @@ int PTstage::process(void)
     PTTRefLen = (PTTConvLen - Cfg.PTReferenceWindow) / 2;
     for (I = 0;I < PTTRefLen;I++)
       PTTConv[I] = (DLReal) 0.0;
-    for (I = PTTRefLen; I < InSig->getData().size();I++)
-      PTTConv[I] = InSig->getData()[I];
+    for (I = PTTRefLen; I < InSig->getData()->size();I++)
+      PTTConv[I] = InSig->getData()->at(I);
     BlackmanWindow(&PTTConv[PTTRefLen],Cfg.PTReferenceWindow);
     for (I = (PTTRefLen + Cfg.PTReferenceWindow);I < PTTConvLen;I++)
       PTTConv[I] = (DLReal) 0.0;
@@ -151,8 +148,8 @@ int PTstage::process(void)
       /* Salva la componente MP */
       sputsp("Saving psychoacoustic target filter: ",Cfg.PTFilterFile);
       for(L = 0; L < Cfg.PTFilterLen; L++)
-	buf2.push_back(PTFilter[L]);
-      if (SND_WriteSignal(Cfg.PTFilterFile, buf2, 0, Cfg.PTFilterLen, InSig->getSampleRate(), (IFileType) Cfg.PTFilterFileType[0]) == false) {
+	buf->push_back(PTFilter[L]);
+      if (SND_WriteSignal(Cfg.PTFilterFile, buf, 0, Cfg.PTFilterLen, InSig->getSampleRate(), (IFileType) Cfg.PTFilterFileType[0]) == false) {
 	sputs("Psychoacoustic target filter save failed.");
 	return 1;
       }
@@ -219,10 +216,29 @@ int PTstage::process(void)
     OutSig->setWLen(WLen2);
     
     for(K = 0; K < PTTConvLen; K++)
-      OutSig->Data.push_back(PTTConv[K]);
+      OutSig->Data->push_back(PTTConv[K]);
     
-    OutSig->Normalize(Cfg.PTNormFactor, Cfg.PTNormType);
-    OutSig->WriteSignal(Cfg.PTOutFile, Cfg.PTOutFileType);
+    //OutSig->Normalize(Cfg.PTNormFactor, Cfg.PTNormType);
+    //OutSig->WriteSignal(Cfg.PTOutFile, Cfg.PTOutFileType);
   }
   return 0;
+}
+
+void PTstage::Normalize(void)
+{
+  if (Cfg.PTNormFactor > 0) {
+    sputs("PT stage signal normalization.");
+    OutSig->Normalize(Cfg.PTNormFactor, Cfg.PTNormType);
+  }
+}
+
+void PTstage::WriteOutput(void)
+{
+   if (Cfg.PTOutFile != NULL) {
+     sputs("Saving PT stage signal.");
+     if (OutSig->WriteSignal(Cfg.PTOutFile, Cfg.PTOutFileType)== false) {
+       sputs("Test convolution save failed.");
+       return;
+     }
+   }
 }

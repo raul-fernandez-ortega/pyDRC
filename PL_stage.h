@@ -31,6 +31,8 @@ class PLstage
   void NewInCfg(PLParmsType InCfg);
   ~PLstage() {};
   void process(void);
+  void Normalize(void);
+  void WriteOutput(void);
   PLParmsType getPLParms(void) { return Cfg; };
   DRCSignal *getOutSig() { return OutSig; };
   

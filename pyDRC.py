@@ -207,122 +207,122 @@ def LsConv(SweepFile, InverseFile, OutFile):
     return _pyDRC.LsConv(SweepFile, InverseFile, OutFile)
 
 def HammingWindow(ARef, Start, Len):
-    r"""HammingWindow(STLvectorReal & ARef, unsigned int Start, unsigned int Len)"""
+    r"""HammingWindow(STLvectorReal * ARef, unsigned int Start, unsigned int Len) -> STLvectorReal *"""
     return _pyDRC.HammingWindow(ARef, Start, Len)
 
 def HanningWindow(ARef, Start, Len):
-    r"""HanningWindow(STLvectorReal & ARef, unsigned int Start, unsigned int Len)"""
+    r"""HanningWindow(STLvectorReal * ARef, unsigned int Start, unsigned int Len) -> STLvectorReal *"""
     return _pyDRC.HanningWindow(ARef, Start, Len)
 
 def BlackmanWindow(ARef, Start, Len):
-    r"""BlackmanWindow(STLvectorReal & ARef, unsigned int Start, unsigned int Len)"""
+    r"""BlackmanWindow(STLvectorReal * ARef, unsigned int Start, unsigned int Len) -> STLvectorReal *"""
     return _pyDRC.BlackmanWindow(ARef, Start, Len)
 
 def BartlettWindow(ARef, Start, Len):
-    r"""BartlettWindow(STLvectorReal & ARef, unsigned int Start, unsigned int Len)"""
+    r"""BartlettWindow(STLvectorReal * ARef, unsigned int Start, unsigned int Len) -> STLvectorReal *"""
     return _pyDRC.BartlettWindow(ARef, Start, Len)
 
 def BlackmanHarrisWindow(ARef, Start, Len):
-    r"""BlackmanHarrisWindow(STLvectorReal & ARef, unsigned int Start, unsigned int Len)"""
+    r"""BlackmanHarrisWindow(STLvectorReal * ARef, unsigned int Start, unsigned int Len) -> STLvectorReal *"""
     return _pyDRC.BlackmanHarrisWindow(ARef, Start, Len)
 
 def ExponentialWindow(ARef, P, Start, Len):
-    r"""ExponentialWindow(STLvectorReal & ARef, DLReal P, unsigned int Start, unsigned int Len)"""
+    r"""ExponentialWindow(STLvectorReal * ARef, DLReal P, unsigned int Start, unsigned int Len) -> STLvectorReal *"""
     return _pyDRC.ExponentialWindow(ARef, P, Start, Len)
 
 def SpacedBlackmanWindow(ARef, Len, Space, WType):
-    r"""SpacedBlackmanWindow(STLvectorReal & ARef, unsigned int Len, unsigned int Space, WindowType WType)"""
+    r"""SpacedBlackmanWindow(STLvectorReal * ARef, unsigned int Len, unsigned int Space, WindowType WType) -> STLvectorReal *"""
     return _pyDRC.SpacedBlackmanWindow(ARef, Len, Space, WType)
 
 def HalfBlackmanWindow(ARef, Len, Space, WType):
-    r"""HalfBlackmanWindow(STLvectorReal & ARef, unsigned int Len, unsigned int Space, WindowType WType)"""
+    r"""HalfBlackmanWindow(STLvectorReal * ARef, unsigned int Len, unsigned int Space, WindowType WType) -> STLvectorReal *"""
     return _pyDRC.HalfBlackmanWindow(ARef, Len, Space, WType)
 
 def Ones(Size):
-    r"""Ones(unsigned int Size) -> STLvectorReal"""
+    r"""Ones(unsigned int Size) -> STLvectorReal *"""
     return _pyDRC.Ones(Size)
 
 def Delta(Size, delay):
-    r"""Delta(unsigned int Size, unsigned int delay) -> STLvectorReal"""
+    r"""Delta(unsigned int Size, unsigned int delay) -> STLvectorReal *"""
     return _pyDRC.Delta(Size, delay)
 
 def Dir_Convolve(A, B):
-    r"""Dir_Convolve(STLvectorReal const A, STLvectorReal const B) -> STLvectorReal"""
+    r"""Dir_Convolve(STLvectorReal * A, STLvectorReal * B) -> STLvectorReal *"""
     return _pyDRC.Dir_Convolve(A, B)
 
 def Convolve(A, B):
-    r"""Convolve(STLvectorReal const A, STLvectorReal const B) -> STLvectorReal"""
+    r"""Convolve(STLvectorReal * A, STLvectorReal * B) -> STLvectorReal *"""
     return _pyDRC.Convolve(A, B)
 
 def Convolve_part(A, startA, lenA, B, startB, lenB):
-    r"""Convolve_part(STLvectorReal const A, unsigned int startA, unsigned int lenA, STLvectorReal const B, unsigned int startB, unsigned int lenB) -> STLvectorReal"""
+    r"""Convolve_part(STLvectorReal * A, unsigned int startA, unsigned int lenA, STLvectorReal * B, unsigned int startB, unsigned int lenB) -> STLvectorReal *"""
     return _pyDRC.Convolve_part(A, startA, lenA, B, startB, lenB)
 
 def GetRMSLevel(Sig):
-    r"""GetRMSLevel(STLvectorReal const Sig) -> double"""
+    r"""GetRMSLevel(STLvectorReal * Sig) -> double"""
     return _pyDRC.GetRMSLevel(Sig)
 
 def GetBLRMSLevel(Sig, SampleFreq, StartFreq, EndFreq, MExp):
-    r"""GetBLRMSLevel(STLvectorReal const Sig, int const SampleFreq, double const StartFreq, double const EndFreq, int const MExp) -> double"""
+    r"""GetBLRMSLevel(STLvectorReal * Sig, int SampleFreq, double StartFreq, double EndFreq, int MExp) -> double"""
     return _pyDRC.GetBLRMSLevel(Sig, SampleFreq, StartFreq, EndFreq, MExp)
 
 def GetBLFFTRMSLevel(FFTArray, SampleFreq, StartFreq, EndFreq):
-    r"""GetBLFFTRMSLevel(STLvectorComplex const FFTArray, int const SampleFreq, DLReal const StartFreq, DLReal const EndFreq) -> double"""
+    r"""GetBLFFTRMSLevel(STLvectorComplex * FFTArray, int SampleFreq, DLReal StartFreq, DLReal EndFreq) -> double"""
     return _pyDRC.GetBLFFTRMSLevel(FFTArray, SampleFreq, StartFreq, EndFreq)
 
 def SigNormalize(Sig, NormFactor, TNorm):
-    r"""SigNormalize(STLvectorReal & Sig, DLReal const NormFactor, NormType const TNorm)"""
+    r"""SigNormalize(STLvectorReal * Sig, DLReal NormFactor, NormType TNorm)"""
     return _pyDRC.SigNormalize(Sig, NormFactor, TNorm)
 
 def LPDipLimit(Sig, MinGain, DLStart, SampleFreq, StartFreq, EndFreq, MExp):
-    r"""LPDipLimit(STLvectorReal & Sig, DLReal const MinGain, DLReal const DLStart, int const SampleFreq, DLReal const StartFreq, DLReal const EndFreq, int const MExp) -> bool"""
+    r"""LPDipLimit(STLvectorReal * Sig, DLReal MinGain, DLReal DLStart, int SampleFreq, DLReal StartFreq, DLReal EndFreq, int MExp) -> bool"""
     return _pyDRC.LPDipLimit(Sig, MinGain, DLStart, SampleFreq, StartFreq, EndFreq, MExp)
 
 def C1LPDipLimit(Sig, MinGain, DLStart, SampleFreq, StartFreq, EndFreq, MExp):
-    r"""C1LPDipLimit(STLvectorReal & Sig, DLReal const MinGain, DLReal const DLStart, int const SampleFreq, DLReal const StartFreq, DLReal const EndFreq, int const MExp) -> bool"""
+    r"""C1LPDipLimit(STLvectorReal * Sig, DLReal MinGain, DLReal DLStart, int SampleFreq, DLReal StartFreq, DLReal EndFreq, int MExp) -> bool"""
     return _pyDRC.C1LPDipLimit(Sig, MinGain, DLStart, SampleFreq, StartFreq, EndFreq, MExp)
 
 def HMPDipLimit(Sig, MinGain, DLStart, SampleFreq, StartFreq, EndFreq, MExp):
-    r"""HMPDipLimit(STLvectorReal & Sig, DLReal const MinGain, DLReal const DLStart, int const SampleFreq, DLReal const StartFreq, DLReal const EndFreq, int const MExp) -> bool"""
+    r"""HMPDipLimit(STLvectorReal * Sig, DLReal MinGain, DLReal DLStart, int SampleFreq, DLReal StartFreq, DLReal EndFreq, int MExp) -> bool"""
     return _pyDRC.HMPDipLimit(Sig, MinGain, DLStart, SampleFreq, StartFreq, EndFreq, MExp)
 
 def C1HMPDipLimit(Sig, MinGain, DLStart, SampleFreq, StartFreq, EndFreq, MExp):
-    r"""C1HMPDipLimit(STLvectorReal & Sig, DLReal const MinGain, DLReal const DLStart, int const SampleFreq, DLReal const StartFreq, DLReal const EndFreq, int const MExp) -> bool"""
+    r"""C1HMPDipLimit(STLvectorReal * Sig, DLReal MinGain, DLReal DLStart, int SampleFreq, DLReal StartFreq, DLReal EndFreq, int MExp) -> bool"""
     return _pyDRC.C1HMPDipLimit(Sig, MinGain, DLStart, SampleFreq, StartFreq, EndFreq, MExp)
 
 def LPPeakLimit(Sig, MaxGain, PLStart, SampleFreq, StartFreq, EndFreq, MExp):
-    r"""LPPeakLimit(STLvectorReal & Sig, DLReal const MaxGain, DLReal const PLStart, int const SampleFreq, DLReal const StartFreq, DLReal const EndFreq, int const MExp) -> bool"""
+    r"""LPPeakLimit(STLvectorReal * Sig, DLReal MaxGain, DLReal PLStart, int SampleFreq, DLReal StartFreq, DLReal EndFreq, int MExp) -> bool"""
     return _pyDRC.LPPeakLimit(Sig, MaxGain, PLStart, SampleFreq, StartFreq, EndFreq, MExp)
 
 def C1LPPeakLimit(Sig, MaxGain, PLStart, SampleFreq, StartFreq, EndFreq, MExp):
-    r"""C1LPPeakLimit(STLvectorReal & Sig, DLReal const MaxGain, DLReal const PLStart, int const SampleFreq, DLReal const StartFreq, DLReal const EndFreq, int const MExp) -> bool"""
+    r"""C1LPPeakLimit(STLvectorReal * Sig, DLReal MaxGain, DLReal PLStart, int SampleFreq, DLReal StartFreq, DLReal const EndFreq, int MExp) -> bool"""
     return _pyDRC.C1LPPeakLimit(Sig, MaxGain, PLStart, SampleFreq, StartFreq, EndFreq, MExp)
 
 def HMPPeakLimit(Sig, MaxGain, PLStart, SampleFreq, StartFreq, EndFreq, MExp):
-    r"""HMPPeakLimit(STLvectorReal & Sig, DLReal const MaxGain, DLReal const PLStart, int const SampleFreq, DLReal const StartFreq, DLReal const EndFreq, int const MExp) -> bool"""
+    r"""HMPPeakLimit(STLvectorReal * Sig, DLReal MaxGain, DLReal PLStart, int SampleFreq, DLReal StartFreq, DLReal EndFreq, int MExp) -> bool"""
     return _pyDRC.HMPPeakLimit(Sig, MaxGain, PLStart, SampleFreq, StartFreq, EndFreq, MExp)
 
 def C1HMPPeakLimit(Sig, MaxGain, PLStart, SampleFreq, StartFreq, EndFreq, MExp):
-    r"""C1HMPPeakLimit(STLvectorReal & Sig, DLReal const MaxGain, DLReal const PLStart, int const SampleFreq, DLReal const StartFreq, DLReal const EndFreq, int const MExp) -> bool"""
+    r"""C1HMPPeakLimit(STLvectorReal * Sig, DLReal MaxGain, DLReal PLStart, int SampleFreq, DLReal StartFreq, DLReal EndFreq, int MExp) -> bool"""
     return _pyDRC.C1HMPPeakLimit(Sig, MaxGain, PLStart, SampleFreq, StartFreq, EndFreq, MExp)
 
 def LPNormFlat(Sig, Gain, OGainFactor, MExp):
-    r"""LPNormFlat(STLvectorReal & Sig, DLReal const Gain, DLReal const OGainFactor, int const MExp) -> bool"""
+    r"""LPNormFlat(STLvectorReal * Sig, DLReal Gain, DLReal OGainFactor, int MExp) -> bool"""
     return _pyDRC.LPNormFlat(Sig, Gain, OGainFactor, MExp)
 
 def CMPNormFlat(Sig, Gain, OGainFactor, MExp):
-    r"""CMPNormFlat(STLvectorReal & Sig, DLReal const Gain, DLReal const OGainFactor, int const MExp) -> bool"""
+    r"""CMPNormFlat(STLvectorReal * Sig, DLReal Gain, DLReal OGainFactor, int MExp) -> bool"""
     return _pyDRC.CMPNormFlat(Sig, Gain, OGainFactor, MExp)
 
 def HMPNormFlat(Sig, Gain, OGainFactor, MExp):
-    r"""HMPNormFlat(STLvectorReal & Sig, DLReal const Gain, DLReal const OGainFactor, int const MExp) -> bool"""
+    r"""HMPNormFlat(STLvectorReal * Sig, DLReal Gain, DLReal OGainFactor, int MExp) -> bool"""
     return _pyDRC.HMPNormFlat(Sig, Gain, OGainFactor, MExp)
 class DRCSignal(object):
     r"""Proxy of C++ DRCSignal class."""
 
     thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
     __repr__ = _swig_repr
-    Data = property(_pyDRC.DRCSignal_Data_get, _pyDRC.DRCSignal_Data_set, doc=r"""Data : STLvectorReal""")
+    Data = property(_pyDRC.DRCSignal_Data_get, _pyDRC.DRCSignal_Data_set, doc=r"""Data : p.STLvectorReal""")
     __swig_destroy__ = _pyDRC.delete_DRCSignal
 
     def __init__(self, *args):
@@ -336,9 +336,12 @@ class DRCSignal(object):
         r"""setParams(DRCSignal self, DRCSignal SCopy)"""
         return _pyDRC.DRCSignal_setParams(self, SCopy)
 
-    def setData(self, InData, psstart, psend):
-        r"""setData(DRCSignal self, STLvectorReal InData, int psstart, int psend)"""
-        return _pyDRC.DRCSignal_setData(self, InData, psstart, psend)
+    def setData(self, *args):
+        r"""
+        setData(DRCSignal self, STLvectorReal * InData, int psstart, int psend)
+        setData(DRCSignal self, STLvectorReal * InData)
+        """
+        return _pyDRC.DRCSignal_setData(self, *args)
 
     def clearData(self):
         r"""clearData(DRCSignal self)"""
@@ -373,7 +376,7 @@ class DRCSignal(object):
         return _pyDRC.DRCSignal_setPath(self, path)
 
     def getData(self):
-        r"""getData(DRCSignal self) -> STLvectorReal"""
+        r"""getData(DRCSignal self) -> STLvectorReal *"""
         return _pyDRC.DRCSignal_getData(self)
 
     def getPreWindowLen(self):
@@ -417,27 +420,31 @@ _pyDRC.DRCSignal_swigregister(DRCSignal)
 
 
 def ToeplitzSolve(A, B, N):
-    r"""ToeplitzSolve(STLvectorReal const A, STLvectorReal const B, unsigned int N) -> STLvectorReal"""
+    r"""ToeplitzSolve(STLvectorReal * A, STLvectorReal * B, unsigned int N) -> STLvectorReal *"""
     return _pyDRC.ToeplitzSolve(A, B, N)
 
 def KirkebyFDInvert(InSig, InSigLen, InvFilterSigLen, EffortSig, EffortFactor, MExp):
-    r"""KirkebyFDInvert(STLvectorReal const InSig, unsigned int InSigLen, unsigned int InvFilterSigLen, STLvectorReal const EffortSig, DLReal EffortFactor, int MExp) -> STLvectorReal"""
+    r"""KirkebyFDInvert(STLvectorReal * InSig, unsigned int InSigLen, unsigned int InvFilterSigLen, STLvectorReal * EffortSig, DLReal EffortFactor, int MExp) -> STLvectorReal *"""
     return _pyDRC.KirkebyFDInvert(InSig, InSigLen, InvFilterSigLen, EffortSig, EffortFactor, MExp)
 
 def PEISMPKirkebyFDInvert(MPSig, EPSig, InvFilterSigLen, EffortFactor, MExp):
-    r"""PEISMPKirkebyFDInvert(STLvectorReal const MPSig, STLvectorReal const EPSig, unsigned int InvFilterSigLen, DLReal EffortFactor, int MExp) -> STLvectorReal"""
+    r"""PEISMPKirkebyFDInvert(STLvectorReal * MPSig, STLvectorReal * EPSig, unsigned int InvFilterSigLen, DLReal EffortFactor, int MExp) -> STLvectorReal *"""
     return _pyDRC.PEISMPKirkebyFDInvert(MPSig, EPSig, InvFilterSigLen, EffortFactor, MExp)
 
 def STL_PEMSMPKirkebyFDInvert(MPSig, EPSig, InvFilterLen, EffortFactor, PEStart, PETransition, MExp):
-    r"""STL_PEMSMPKirkebyFDInvert(STLvectorReal const MPSig, STLvectorReal const EPSig, unsigned int InvFilterLen, DLReal EffortFactor, int PEStart, int PETransition, int MExp) -> STLvectorReal"""
+    r"""STL_PEMSMPKirkebyFDInvert(STLvectorReal * MPSig, STLvectorReal * EPSig, unsigned int InvFilterLen, DLReal EffortFactor, int PEStart, int PETransition, int MExp) -> STLvectorReal *"""
     return _pyDRC.STL_PEMSMPKirkebyFDInvert(MPSig, EPSig, InvFilterLen, EffortFactor, PEStart, PETransition, MExp)
 
 def PETFDInvert(MPSig, EPSig, InvFilterLen, PEType, PELowerWindow, PEUpperWindow, PEStartFreq, PEEndFreq, PEFilterLen, FSharpness, PEBandSplit, PEWindowExponent, OGainFactor, SampleRate, MExp, SLPType):
-    r"""PETFDInvert(STLvectorReal const MPSig, STLvectorReal const EPSig, unsigned int InvFilterLen, char PEType, int PELowerWindow, int PEUpperWindow, int PEStartFreq, int PEEndFreq, int PEFilterLen, DLReal FSharpness, int PEBandSplit, DLReal PEWindowExponent, DLReal const OGainFactor, int SampleRate, int MExp, SLPPrefilteringType const SLPType) -> STLvectorReal"""
+    r"""PETFDInvert(STLvectorReal * MPSig, STLvectorReal * EPSig, unsigned int InvFilterLen, char PEType, int PELowerWindow, int PEUpperWindow, int PEStartFreq, int PEEndFreq, int PEFilterLen, DLReal FSharpness, int PEBandSplit, DLReal PEWindowExponent, DLReal const OGainFactor, int SampleRate, int MExp, SLPPrefilteringType const SLPType) -> STLvectorReal *"""
     return _pyDRC.PETFDInvert(MPSig, EPSig, InvFilterLen, PEType, PELowerWindow, PEUpperWindow, PEStartFreq, PEEndFreq, PEFilterLen, FSharpness, PEBandSplit, PEWindowExponent, OGainFactor, SampleRate, MExp, SLPType)
 
+def STL_FastLowPassFir(Order, Freq, Window, WSize):
+    r"""STL_FastLowPassFir(unsigned int const Order, DLReal const Freq, STLvectorReal * Window, unsigned int const WSize) -> STLvectorReal *"""
+    return _pyDRC.STL_FastLowPassFir(Order, Freq, Window, WSize)
+
 def SLPreFilt(Sig, IBS, FBS, FilterLen, BandSplit, WindowExponent, SampleFreq, StartFreq, EndFreq, WindowGap, FSharpness, WType, SLPType):
-    r"""SLPreFilt(STLvectorReal Sig, int IBS, int FBS, int FilterLen, int BandSplit, DLReal WindowExponent, int SampleFreq, DLReal StartFreq, DLReal EndFreq, int WindowGap, DLReal FSharpness, WindowType const WType, SLPPrefilteringType SLPType) -> STLvectorReal"""
+    r"""SLPreFilt(STLvectorReal * Sig, int IBS, int FBS, int FilterLen, int BandSplit, DLReal WindowExponent, int SampleFreq, DLReal StartFreq, DLReal EndFreq, int WindowGap, DLReal FSharpness, WindowType const WType, SLPPrefilteringType SLPType) -> STLvectorReal *"""
     return _pyDRC.SLPreFilt(Sig, IBS, FBS, FilterLen, BandSplit, WindowExponent, SampleFreq, StartFreq, EndFreq, WindowGap, FSharpness, WType, SLPType)
 class HD(object):
     r"""Proxy of C++ HD class."""
@@ -485,7 +492,7 @@ _pyDRC.HD_swigregister(HD)
 
 
 def BWPreFilt(Sig, IBS, FBS, FilterLen, BandSplit, WindowExponent, SampleFreq, StartFreq, EndFreq, WindowGap, WType, SLPType):
-    r"""BWPreFilt(STLvectorReal Sig, int IBS, int FBS, int FilterLen, int BandSplit, DLReal WindowExponent, int SampleFreq, DLReal StartFreq, DLReal EndFreq, int WindowGap, WindowType WType, BWPPrefilteringType SLPType) -> STLvectorReal"""
+    r"""BWPreFilt(STLvectorReal * Sig, int IBS, int FBS, int FilterLen, int BandSplit, DLReal WindowExponent, int SampleFreq, DLReal StartFreq, DLReal EndFreq, int WindowGap, WindowType WType, BWPPrefilteringType SLPType) -> STLvectorReal *"""
     return _pyDRC.BWPreFilt(Sig, IBS, FBS, FilterLen, BandSplit, WindowExponent, SampleFreq, StartFreq, EndFreq, WindowGap, WType, SLPType)
 class BCParmsType(object):
     r"""
@@ -687,6 +694,14 @@ class BCstage(object):
     def process(self):
         r"""process(BCstage self) -> bool"""
         return _pyDRC.BCstage_process(self)
+
+    def Normalize(self):
+        r"""Normalize(BCstage self)"""
+        return _pyDRC.BCstage_Normalize(self)
+
+    def WriteOutput(self):
+        r"""WriteOutput(BCstage self)"""
+        return _pyDRC.BCstage_WriteOutput(self)
 
     def SeekImpulseCenter(self):
         r"""SeekImpulseCenter(BCstage self) -> bool"""
@@ -905,6 +920,14 @@ class HDstage(object):
         r"""process(HDstage self)"""
         return _pyDRC.HDstage_process(self)
 
+    def Normalize(self):
+        r"""Normalize(HDstage self)"""
+        return _pyDRC.HDstage_Normalize(self)
+
+    def WriteOutput(self):
+        r"""WriteOutput(HDstage self)"""
+        return _pyDRC.HDstage_WriteOutput(self)
+
     def getHDParms(self):
         r"""getHDParms(HDstage self) -> HDParmsType"""
         return _pyDRC.HDstage_getHDParms(self)
@@ -974,6 +997,14 @@ class WFstage(object):
     def process(self):
         r"""process(WFstage self)"""
         return _pyDRC.WFstage_process(self)
+
+    def Normalize(self):
+        r"""Normalize(WFstage self)"""
+        return _pyDRC.WFstage_Normalize(self)
+
+    def WriteOutput(self):
+        r"""WriteOutput(WFstage self)"""
+        return _pyDRC.WFstage_WriteOutput(self)
 
     def getWFParms(self):
         r"""getWFParms(WFstage self) -> WFParmsType"""
@@ -1180,6 +1211,14 @@ class HRstage(object):
     def process(self):
         r"""process(HRstage self)"""
         return _pyDRC.HRstage_process(self)
+
+    def Normalize(self):
+        r"""Normalize(HRstage self)"""
+        return _pyDRC.HRstage_Normalize(self)
+
+    def WriteOutput(self):
+        r"""WriteOutput(HRstage self)"""
+        return _pyDRC.HRstage_WriteOutput(self)
 
     def getCfgParms(self):
         r"""getCfgParms(HRstage self) -> HRParmsType"""
@@ -1437,6 +1476,14 @@ class DLstage(object):
         r"""process(DLstage self)"""
         return _pyDRC.DLstage_process(self)
 
+    def Normalize(self):
+        r"""Normalize(DLstage self)"""
+        return _pyDRC.DLstage_Normalize(self)
+
+    def WriteOutput(self):
+        r"""WriteOutput(DLstage self)"""
+        return _pyDRC.DLstage_WriteOutput(self)
+
     def getCfgParms(self):
         r"""getCfgParms(DLstage self) -> DLParmsType"""
         return _pyDRC.DLstage_getCfgParms(self)
@@ -1671,6 +1718,14 @@ class ERstage(object):
     def process(self):
         r"""process(ERstage self)"""
         return _pyDRC.ERstage_process(self)
+
+    def Normalize(self):
+        r"""Normalize(ERstage self)"""
+        return _pyDRC.ERstage_Normalize(self)
+
+    def WriteOutput(self):
+        r"""WriteOutput(ERstage self)"""
+        return _pyDRC.ERstage_WriteOutput(self)
 
     def getCfgParms(self):
         r"""getCfgParms(ERstage self) -> ERParmsType"""
@@ -2153,6 +2208,14 @@ class ISstage(object):
         r"""process(ISstage self)"""
         return _pyDRC.ISstage_process(self)
 
+    def Normalize(self):
+        r"""Normalize(ISstage self)"""
+        return _pyDRC.ISstage_Normalize(self)
+
+    def WriteOutput(self):
+        r"""WriteOutput(ISstage self)"""
+        return _pyDRC.ISstage_WriteOutput(self)
+
     def getCfgParms(self):
         r"""getCfgParms(ISstage self) -> ISParmsType"""
         return _pyDRC.ISstage_getCfgParms(self)
@@ -2225,6 +2288,14 @@ class PTstage(object):
         r"""process(PTstage self) -> int"""
         return _pyDRC.PTstage_process(self)
 
+    def Normalize(self):
+        r"""Normalize(PTstage self)"""
+        return _pyDRC.PTstage_Normalize(self)
+
+    def WriteOutput(self):
+        r"""WriteOutput(PTstage self)"""
+        return _pyDRC.PTstage_WriteOutput(self)
+
     def getPTParms(self):
         r"""getPTParms(PTstage self) -> PTParmsType"""
         return _pyDRC.PTstage_getPTParms(self)
@@ -2283,6 +2354,14 @@ class PLstage(object):
     def process(self):
         r"""process(PLstage self)"""
         return _pyDRC.PLstage_process(self)
+
+    def Normalize(self):
+        r"""Normalize(PLstage self)"""
+        return _pyDRC.PLstage_Normalize(self)
+
+    def WriteOutput(self):
+        r"""WriteOutput(PLstage self)"""
+        return _pyDRC.PLstage_WriteOutput(self)
 
     def getPLParms(self):
         r"""getPLParms(PLstage self) -> PLParmsType"""
@@ -2345,6 +2424,14 @@ class PSstage(object):
         r"""process(PSstage self)"""
         return _pyDRC.PSstage_process(self)
 
+    def Normalize(self):
+        r"""Normalize(PSstage self)"""
+        return _pyDRC.PSstage_Normalize(self)
+
+    def WriteOutput(self):
+        r"""WriteOutput(PSstage self)"""
+        return _pyDRC.PSstage_WriteOutput(self)
+
     def getCfgParms(self):
         r"""getCfgParms(PSstage self) -> PSParmsType"""
         return _pyDRC.PSstage_getCfgParms(self)
@@ -2402,6 +2489,14 @@ class MSstage(object):
     def process(self):
         r"""process(MSstage self)"""
         return _pyDRC.MSstage_process(self)
+
+    def Normalize(self):
+        r"""Normalize(MSstage self)"""
+        return _pyDRC.MSstage_Normalize(self)
+
+    def WriteOutput(self):
+        r"""WriteOutput(MSstage self)"""
+        return _pyDRC.MSstage_WriteOutput(self)
 
     def getCfgParms(self):
         r"""getCfgParms(MSstage self) -> MSParmsType"""
@@ -2468,6 +2563,14 @@ class TCstage(object):
     def process(self):
         r"""process(TCstage self)"""
         return _pyDRC.TCstage_process(self)
+
+    def Normalize(self):
+        r"""Normalize(TCstage self)"""
+        return _pyDRC.TCstage_Normalize(self)
+
+    def WriteOutput(self):
+        r"""WriteOutput(TCstage self)"""
+        return _pyDRC.TCstage_WriteOutput(self)
 
     def getCfgParms(self):
         r"""getCfgParms(TCstage self) -> TCParmsType"""
