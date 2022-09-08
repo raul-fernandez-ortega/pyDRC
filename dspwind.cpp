@@ -82,41 +82,41 @@ void BlackmanWindow(DLReal * A,unsigned int Size)
   }
 
 void SpacedBlackmanWindow(DLReal * A,unsigned int Size, unsigned int Space, WindowType WType)
-  {
-		unsigned int ESize = Size - Space;
-    unsigned int I,Half = (ESize) / 2;
-    DLReal C;
-		DLReal C1 = 2*M_PI/(ESize-1);
-		DLReal C2 = 4*M_PI/(ESize-1);
-
-		switch (WType)
-			{
-				case WRight:
-					for(I = 0;I < Half;I++)
-						{
-							C = (DLReal) (0.42-0.5*DLCos(C1*I)+0.08*DLCos(C2*I));
-							A[Size-I-1] *= C;
-						}
-				break;
-
-				case WFull:
-					for(I = 0;I < Half;I++)
-						{
-							C = (DLReal) (0.42-0.5*DLCos(C1*I)+0.08*DLCos(C2*I));
-							A[I] *= C;
-							A[Size-I-1] *= C;
-						}
-				break;
-
-				case WLeft:
-					for(I = 0;I < Half;I++)
-						{
-							C = (DLReal) (0.42-0.5*DLCos(C1*I)+0.08*DLCos(C2*I));
-							A[I] *= C;
-						}
-				break;
-			}
-  }
+{
+  unsigned int ESize = Size - Space;
+  unsigned int I,Half = (ESize) / 2;
+  DLReal C;
+  DLReal C1 = 2*M_PI/(ESize-1);
+  DLReal C2 = 4*M_PI/(ESize-1);
+  
+  switch (WType)
+    {
+    case WRight:
+      for(I = 0;I < Half;I++)
+	{
+	  C = (DLReal) (0.42-0.5*DLCos(C1*I)+0.08*DLCos(C2*I));
+	  A[Size-I-1] *= C;
+	}
+      break;
+      
+    case WFull:
+      for(I = 0;I < Half;I++)
+	{
+	  C = (DLReal) (0.42-0.5*DLCos(C1*I)+0.08*DLCos(C2*I));
+	  A[I] *= C;
+	  A[Size-I-1] *= C;
+	}
+      break;
+      
+    case WLeft:
+      for(I = 0;I < Half;I++)
+	{
+	  C = (DLReal) (0.42-0.5*DLCos(C1*I)+0.08*DLCos(C2*I));
+	  A[I] *= C;
+	}
+      break;
+    }
+}
 
 void HalfBlackmanWindow(DLReal * A,unsigned int Size, unsigned int Space, WindowType WType)
   {

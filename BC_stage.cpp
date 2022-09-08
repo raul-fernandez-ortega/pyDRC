@@ -20,14 +20,15 @@ bool BCstage::process(void)
 {
   int I, PSStart, PSEnd;
   DLReal* InSig;
-
+  
   OutSignal->clearData();
   DLReal SRMSValue;
-
+  
   /* Controlla il tipo ricerca centro impulso */
   if (Cfg.BCImpulseCenterMode[0] == 'A')  {
     /* Ricerca il centro impulso */
     sputsp("Seeking impulse center on: ", Cfg.BCInFile);
+    fflush(stdout);
     //Cfg.BCImpulseCenter = FindMaxPcm(Cfg.BCInFile,(IFileType) Cfg.BCInFileType[0]);
     Cfg.BCImpulseCenter = SND_FindMaxPcm(Cfg.BCInFile);
     if (Cfg.BCImpulseCenter < 0)
@@ -72,8 +73,6 @@ bool BCstage::process(void)
   else
     printf("Input signal RMS level %f (-inf dB).\n",(double) SRMSValue);
   fflush(stdout); 
-  OutSignal->setPSStart(PSStart);
-  OutSignal->setPSEnd(PSEnd);
   
   /* Verifica se si deve effettuare il dip limiting */
   if (Cfg.BCDLMinGain > 0) {
@@ -101,13 +100,33 @@ bool BCstage::process(void)
       }
   }
   for (I = 0; I < Cfg.BCInitWindow; I++)
-    OutSignal->Data.push_back(InSig[I]);
+    OutSignal->Data->push_back(InSig[I]);
   OutSignal->setWStart(0);
   OutSignal->setWLen(Cfg.BCInitWindow);
   OutSignal->setPath(Cfg.BCBaseDir);
-  OutSignal->Normalize(Cfg.BCNormFactor,Cfg.BCNormType);
-  OutSignal->WriteSignal(Cfg.BCOutFile, Cfg.BCOutFileType);
+  OutSignal->setPSStart(PSStart);
+  OutSignal->setPSEnd(PSEnd);
+
+  //Normalize();
+  //WriteOutput();
+
   return true;
+}
+
+void BCstage::Normalize(void)
+{
+  if (Cfg.BCNormFactor > 0) {
+    sputs("BC stage impulse normalization.");
+    OutSignal->Normalize(Cfg.BCNormFactor,Cfg.BCNormType);
+  }
+}
+
+void BCstage::WriteOutput(void)
+{
+  if (Cfg.BCOutFile != NULL) {
+    sputs("Saving BC stage input impulse.");
+    OutSignal->WriteSignal(Cfg.BCOutFile, Cfg.BCOutFileType);
+  }
 }
 
 bool BCstage::SeekImpulseCenter(void)
@@ -130,7 +149,7 @@ bool BCstage::ReadImpulseFile(void)
 		     0,Cfg.BCInitWindow);
   OutSignal->setPSStart(PSStart);
   OutSignal->setPSEnd(PSEnd);
-  if (OutSignal->Data.size()>0)
+  if (OutSignal->Data->size()>0)
     return true;
   else
     return false;

@@ -4,16 +4,15 @@ HDstage::HDstage(DRCSignal *InputSig, HDParmsType InCfg)
 {
   Cfg = InCfg;
   InSignal = InputSig;
-  MPSignal = new DRCSignal(*InputSig);
-  EPSignal = new DRCSignal(*InputSig);
-  //process();
+  MPSignal = new DRCSignal(InputSig);
+  EPSignal = new DRCSignal(InputSig);
 }
 
 void HDstage::NewInputSignal(DRCSignal *InputSig)
 {
   InSignal = InputSig;
-  MPSignal = new DRCSignal(*InputSig);
-  EPSignal = new DRCSignal(*InputSig);
+  MPSignal->setParams(InputSig);
+  EPSignal->setParams(InputSig);
 }
 
 void HDstage::NewInCfg(HDParmsType InCfg)
@@ -31,7 +30,7 @@ void HDstage::process(void)
 
   MPSignal->clearData();
   EPSignal->clearData();  
-  inDataSize = InSignal->getData().size();
+  inDataSize = InSignal->getData()->size();
 
   sputs("Allocating homomorphic deconvolution arrays.");
   InSig = new DLReal[inDataSize];
@@ -52,7 +51,7 @@ void HDstage::process(void)
   
   /* Azzera gli array */
   for(I = 0; I < inDataSize; I++)
-      InSig[I] = InSignal->Data[I];
+    InSig[I] = InSignal->Data->at(I);
   for (I = 0;I < 2 * inDataSize; I++)
     MPSig[I] = 0;
   for (I = 0;I < inDataSize; I++)
@@ -65,11 +64,12 @@ void HDstage::process(void)
     return;
   }
   for(I=0; I < inDataSize; I++) {
-    MPSignal->Data.push_back(MPSig[I]);
-    EPSignal->Data.push_back(EPSig[I]);
+    MPSignal->Data->push_back(MPSig[I]);
+    EPSignal->Data->push_back(EPSig[I]);
   }
-  Normalize();
-  WriteOutput();
+
+  //Normalize();
+  //WriteOutput();
 }
 
 void HDstage::Normalize(void)
@@ -83,16 +83,17 @@ void HDstage::Normalize(void)
     EPSignal->Normalize(Cfg.HDEPNormFactor,Cfg.HDEPNormType);
   }
 }
+
 void HDstage::WriteOutput(void)
 {
   if (Cfg.HDMPOutFile != NULL) {
-    sputsp("Saving minimum phase component: ",Cfg.HDMPOutFile);
+    sputs("Saving minimum phase component.");
     if (MPSignal->WriteSignal(Cfg.HDMPOutFile, Cfg.HDMPOutFileType) == false) {
       sputs("Minimum phase component save failed.");
     }
   }
   if (Cfg.HDEPOutFile != NULL) {
-    sputsp("Saving excess phase component: ",Cfg.HDEPOutFile);
+    sputs("Saving excess phase component.");
     EPSignal->setWStart(0);
     if (EPSignal->WriteSignal(Cfg.HDEPOutFile, Cfg.HDEPOutFileType) == false) {
       sputs("Excess phase component save failed.");

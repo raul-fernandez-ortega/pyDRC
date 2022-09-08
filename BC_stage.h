@@ -42,6 +42,8 @@ class BCstage
   ~BCstage() {};
   void NewCfgParms(BCParmsType InCfg);
   bool process(void);
+  void Normalize(void);
+  void WriteOutput(void);
   bool SeekImpulseCenter(void);
   bool ReadImpulseFile(void);
   BCParmsType getCfgParms() { return Cfg; };

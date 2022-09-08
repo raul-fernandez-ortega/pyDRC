@@ -24,12 +24,13 @@ class DRCSignal
   char *Path;
 
  public:
-  STLvectorReal Data;
+  STLvectorReal *Data;
   DRCSignal();
   ~DRCSignal() {};
-  DRCSignal(DRCSignal &SCopy);
-  void setParams(DRCSignal &SCopy);
-  void setData(STLvectorReal InData, int psstart, int psend);
+  DRCSignal(DRCSignal *SCopy);
+  void setParams(DRCSignal *SCopy);
+  void setData(STLvectorReal *InData, int psstart, int psend);
+  void setData(STLvectorReal *InData);
   void clearData(void);
   void setPreWindowLen(int prewindowlen);
   void setPSStart(int psstart);
@@ -38,7 +39,7 @@ class DRCSignal
   void setWLen(int wlen);
   void setSampleRate(int srate);
   void setPath(char *path);
-  STLvectorReal getData(void);
+  STLvectorReal *getData(void);
   int getPreWindowLen(void);
   int getPSStart(void);
   int getPSEnd(void);
@@ -50,21 +51,21 @@ class DRCSignal
   bool WriteSignal(char* outfile, char* outfiletype);
 };
 
-STLvectorReal STL_ToeplitzSolve(const STLvectorReal A, const STLvectorReal B, unsigned int N);
+STLvectorReal *STL_ToeplitzSolve(STLvectorReal *A, STLvectorReal *B, unsigned int N);
 
-STLvectorReal STL_KirkebyFDInvert(const STLvectorReal InSig, unsigned int InSigLen, 
-				  unsigned int InvFilterSigLen, const STLvectorReal EffortSig, 
+STLvectorReal *STL_KirkebyFDInvert(STLvectorReal *InSig, unsigned int InSigLen, 
+				  unsigned int InvFilterSigLen, STLvectorReal *EffortSig, 
 				  DLReal EffortFactor, int MExp);
 
-STLvectorReal STL_PEISMPKirkebyFDInvert(const STLvectorReal MPSig, const STLvectorReal EPSig, 
+STLvectorReal *STL_PEISMPKirkebyFDInvert(STLvectorReal *MPSig, STLvectorReal *EPSig, 
 					unsigned int InvFilterSigLen, DLReal EffortFactor, 
 					int MExp);
 
-STLvectorReal STL_PEMSMPKirkebyFDInvert(const STLvectorReal MPSig, const STLvectorReal EPSig,
+STLvectorReal *STL_PEMSMPKirkebyFDInvert(STLvectorReal *MPSig, STLvectorReal *EPSig,
 					unsigned int InvFilterLen, DLReal EffortFactor, 
 					int PEStart, int PETransition, int MExp);
 
-STLvectorReal STL_PETFDInvert(const STLvectorReal MPSig, const STLvectorReal EPSig, 
+STLvectorReal *STL_PETFDInvert(STLvectorReal *MPSig, STLvectorReal *EPSig, 
 			      unsigned int InvFilterLen, char PEType, int PELowerWindow, 
 			      int PEUpperWindow, int PEStartFreq, int PEEndFreq, 
 			      int PEFilterLen, DLReal FSharpness, int PEBandSplit, 

@@ -3,32 +3,27 @@
 DLstage::DLstage(DRCSignal *InputSig, DLParmsType InCfg)
 {
   InSig = InputSig;
-  OutSig = new DRCSignal(*InputSig);
+  OutSig = new DRCSignal(InputSig);
   Cfg = InCfg;
-  //process();
-
 }
 void DLstage::NewInputSignal(DRCSignal *InputSig)
 {
   InSig = InputSig;
-  delete OutSig;
-  OutSig = new DRCSignal(*InputSig);
-  //process();
+  OutSig->setParams(InputSig);
 }
 void DLstage::NewInCfg(DLParmsType InCfg)
 {
   Cfg = InCfg;
-  //process();
 }
 
 void DLstage::process(void)
 {
-  unsigned int I;
-  STLvectorReal BufSig;
+  unsigned int i;
+  STLvectorReal *BufSig = new STLvectorReal();
 
   OutSig->clearData();
-  for(I = 0; I < InSig->Data.size() ; I++)
-      BufSig.push_back(InSig->Data[I]);
+  for(i = 0; i < InSig->Data->size() ; i++)
+    BufSig->push_back(InSig->Data->at(i));
 
   /* Verifica se si deve effettuare il dip limiting */
   if (Cfg.DLMinGain > 0)
@@ -60,9 +55,24 @@ void DLstage::process(void)
 	    }
 	  break;
 	}
-      for(I = 0; I <  InSig->Data.size(); I++)
-	OutSig->Data.push_back(BufSig[I]);
+      OutSig->setData(BufSig, 0, BufSig->size());
     } 
-  OutSig->Normalize(Cfg.DLNormFactor, Cfg.DLNormType);
-  OutSig->WriteSignal(Cfg.DLOutFile, Cfg.DLOutFileType);
+  //Normalize();
+  //WriteOutput();
+}
+
+void DLstage::Normalize(void)
+{
+  if (Cfg.DLNormFactor > 0) {
+    sputs("DL stage impulse normalization.");
+    OutSig->Normalize(Cfg.DLNormFactor,Cfg.DLNormType);
+  }
+}
+
+void DLstage::WriteOutput(void)
+{
+  if (Cfg.DLOutFile != NULL) {
+    sputs("Saving DL stage impulse.");
+    OutSig->WriteSignal(Cfg.DLOutFile, Cfg.DLOutFileType);
+  }
 }

@@ -4,14 +4,13 @@ ERstage::ERstage(DRCSignal *EPInputSig, ERParmsType InCfg)
 {
   Cfg = InCfg;
   EPInSig = EPInputSig;
-  EPSignal = new DRCSignal(*EPInputSig);
+  EPSignal = new DRCSignal(EPInputSig);
 }
 
 void ERstage::NewInputSignal(DRCSignal *EPInputSig)
 {
   EPInSig = EPInputSig;
-  delete EPSignal;
-  EPSignal = new DRCSignal(*EPInputSig);
+  EPSignal->setParams(EPInputSig);
 }
 
 void ERstage::NewInCfg(ERParmsType InCfg)
@@ -21,17 +20,16 @@ void ERstage::NewInCfg(ERParmsType InCfg)
 
 void ERstage::process(void)
 {
-  int I, J;
+  int i, I, J;
   int EPDataLen;
   DLReal *EPSig;
   DLReal *EPPFSig;
 
-  EPDataLen = EPInSig->getData().size();
+  EPDataLen = EPInSig->getData()->size();
   EPSignal->clearData();
   EPPFSig = new DLReal[EPDataLen];
-  for(I = 0; I < EPDataLen; I++) {
-    EPPFSig[I] = EPInSig->Data[I];
-  }
+  for(i = 0; i < EPDataLen; i++)
+    EPPFSig[i] = EPInSig->Data->at(i);
   /* Verifica se si deve effettuare riappianamento */
   if (Cfg.EREPFlatGain > 0) {
     switch (Cfg.EREPFlatType[0]) {
@@ -80,10 +78,26 @@ void ERstage::process(void)
     BlackmanWindow(&EPPFSig[EPInSig->getWStart()],EPInSig->getWLen());
   }
   
-  for(I=0; I < EPInSig->getWStart() + EPInSig->getWLen(); I++)
-    EPSignal->Data.push_back(EPPFSig[I]);
+  for(i = 0; i < EPInSig->getWStart() + EPInSig->getWLen(); i++)
+    EPSignal->Data->push_back(EPPFSig[i]);
   EPSignal->setWStart(EPInSig->getWStart());
   EPSignal->setWLen(EPInSig->getWLen());
-  EPSignal->Normalize(Cfg.EREPNormFactor, Cfg.EREPNormType);
-  EPSignal->WriteSignal(Cfg.EREPOutFile,  Cfg.EREPOutFileType);
+  //Normalize();
+  //WriteOutput();
+}
+
+void ERstage::Normalize(void)
+{
+  if (Cfg.EREPNormFactor > 0) {
+    sputs("EPS stage impulse normalization.");
+    EPSignal->Normalize(Cfg.EREPNormFactor,Cfg.EREPNormType);
+  }
+}
+
+void ERstage::WriteOutput(void)
+{
+  if (Cfg.EREPOutFile != NULL) {
+    sputs("Saving EPS stage impulse.");
+    EPSignal->WriteSignal(Cfg.EREPOutFile, Cfg.EREPOutFileType);
+  }
 }

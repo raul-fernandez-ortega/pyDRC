@@ -72,9 +72,8 @@ size_t FSize(FILE * F)
    di dimensione InitWindow.
    Ritorna true se l'operazione ha successo.
 */
-bool ReadSignal(const char * FName,DRCFloat * Dst,const int InitWindow,
-		const int ImpulseCenter,const IFileType FType,
-		int * PreSpikeStart, int * PostSpikeEnd)
+bool ReadSignal(const char * FName,DRCFloat *Dst,const int InitWindow, const int ImpulseCenter,
+		const IFileType FType,int * PreSpikeStart, int * PostSpikeEnd)
 {
   int I;
   int IStart;

@@ -26,9 +26,10 @@ void HD::SetMExp(int InMExp)
 }
 void HD::process(void)
 {
-  STLvectorReal MPdata, EPdata;
+  STLvectorReal *MPdata = new STLvectorReal();
+  STLvectorReal *EPdata = new STLvectorReal();
   unsigned int I, J;
-  unsigned int SigLen = InSig->Data.size();
+  unsigned int SigLen = InSig->getData()->size();
   //MPSig->setData(MPSig->Data.clear());
   //EPSig->setData(EPSig->Data.clear());
   DLReal *hd_InSig = new DLReal[SigLen];
@@ -39,7 +40,7 @@ void HD::process(void)
     hd_EPSig[I] = 0;
   }
   for(J =0, I = hd_start; J < hd_len; J++, I++) {
-    hd_InSig[J] = InSig->Data[I];
+    hd_InSig[J] = InSig->getData()->at(I);
     hd_MPSig[I] = 0;
     hd_EPSig[I] = 0;
   }
@@ -49,10 +50,10 @@ void HD::process(void)
   }
   if (CepstrumHD(hd_InSig, hd_MPSig, hd_EPSig, hd_len, MExp) == true) {
     for(I = 0; I < SigLen; I++) {
-      MPdata.push_back(hd_MPSig[I]);
-      EPdata.push_back(hd_EPSig[I]);
+      MPdata->push_back(hd_MPSig[I]);
+      EPdata->push_back(hd_EPSig[I]);
     }
-    MPSig->setData(MPdata,0,MPdata.size());
-    EPSig->setData(EPdata,0,EPdata.size());
+    MPSig->setData(MPdata);
+    EPSig->setData(EPdata);
   }
 }

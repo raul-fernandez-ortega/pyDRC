@@ -37,6 +37,8 @@ def drc(DRCfile):
     BCstageconf.BCDLMultExponent = ConfigDict.BCDLMultExponent
     stage = BCstage(BCstageconf)
     stage.process()
+    stage.Normalize()
+    stage.WriteOutput()
     OutInS = stage.getOutSig()
     
     # 1 - HD stage. Homomorphic Deconvolution.
@@ -53,6 +55,8 @@ def drc(DRCfile):
     HDstageconf.HDEPOutFileType = ConfigDict.HDEPOutFileType
     stage = HDstage(OutInS,HDstageconf)
     stage.process()
+    stage.Normalize()
+    stage.WriteOutput()
     MPS = stage.getMPSig()
     EPS = stage.getEPSig()
     
@@ -78,6 +82,8 @@ def drc(DRCfile):
     #MPstageconf.WFOutFileType = ConfigDict.MPPFOutFileType
     stage = WFstage(MPS,MPstageconf)
     stage.process()
+    stage.Normalize()
+    stage.WriteOutput()
     MPS = stage.getOutSig()
     
     # 3 - DL stage. Dip Limiting.
@@ -95,6 +101,8 @@ def drc(DRCfile):
     #DLstageconf.DLOutFileType = ConfigDict.MPPFOutFileType
     stage = DLstage(MPS,DLstageconf)
     stage.process()
+    stage.Normalize()
+    stage.WriteOutput()
     MPS = stage.getOutSig()
     
     # 5 - HR stage. Homomorphic recovery.
@@ -114,7 +122,9 @@ def drc(DRCfile):
     #HRstageconf.HREPOutFile = ConfigDict.EPPFOutFile
     #HRstageconf.HREPOutFileType = ConfigDict.EPPFOutFileType
     stage = HRstage(MPS,EPS,HRstageconf)
-    stage.process()    
+    stage.process()
+    stage.Normalize()
+    stage.WriteOutput()
     MPS = stage.getMPSig()
     EPS = stage.getEPSig()
 
@@ -140,6 +150,8 @@ def drc(DRCfile):
     #EPstageconf.WFOutFileType = ConfigDict.EPPFOutFileType
     stage = WFstage(EPS,EPstageconf)
     stage.process()
+    stage.Normalize()
+    stage.WriteOutput()
     EPS = stage.getOutSig()
     
     # 5 - ER stage. Excess phase recovery.
@@ -155,7 +167,9 @@ def drc(DRCfile):
     ERstageconf.EREPOutFile = ConfigDict.EPPFOutFile
     ERstageconf.EREPOutFileType = ConfigDict.EPPFOutFileType
     stage = ERstage(EPS,ERstageconf)
-    stage.process()    
+    stage.process()
+    stage.Normalize()
+    stage.WriteOutput()
     EPS = stage.getOutSig()
 
     # 6 - IS stage.Inversion Stage.
@@ -186,6 +200,8 @@ def drc(DRCfile):
     ISstageconf.ISOutFileType = ConfigDict.ISOutFileType
     stage = ISstage(MPS,EPS,ISstageconf)
     stage.process()
+    stage.Normalize()
+    stage.WriteOutput()
     OutS = stage.getISOutSig()
     
     # 7 - PT stage.Psychoacoustic Stage.
@@ -213,6 +229,8 @@ def drc(DRCfile):
     PTstageconf.BCInitWindow = ConfigDict.BCInitWindow
     stage = PTstage(OutS, OutInS, PTstageconf)
     stage.process()
+    stage.Normalize()
+    stage.WriteOutput()
     OutS = stage.getOutSig()
 
     # 8 - PL stage. Peak Limiting.
@@ -231,6 +249,8 @@ def drc(DRCfile):
     PLstageconf.PLOutFileType = ConfigDict.PLOutFileType
     stage = PLstage(OutS,PLstageconf)
     stage.process()
+    stage.Normalize()
+    stage.WriteOutput()
     OutS = stage.getOutSig()
     
     # 9 - RT stage. Ringing Truncation.
@@ -256,6 +276,8 @@ def drc(DRCfile):
     if RTstageconf.WFfilterType[0] != 'N':
         stage = WFstage(OutS, RTstageconf)
         stage.process()
+        stage.Normalize()
+        stage.WriteOutput()
         OutS = stage.getOutSig()
     
     # 10 - PS stage. Postfiltering Stage.
@@ -276,6 +298,8 @@ def drc(DRCfile):
     PSstageconf.ISPELowerWindow = ConfigDict.ISPELowerWindow
     stage= PSstage(OutS,PSstageconf)
     stage.process()
+    stage.Normalize()
+    stage.WriteOutput()
     OutS = stage.getOutSig()
     
     # 11 - MC stage. Microphone Compensation.
@@ -296,6 +320,8 @@ def drc(DRCfile):
     MCstageconf.ISPELowerWindow = ConfigDict.ISPELowerWindow
     stage = PSstage(OutS, MCstageconf)
     stage.process()
+    stage.Normalize()
+    stage.WriteOutput()
     OutS = stage.getOutF()
     
     
@@ -310,6 +336,8 @@ def drc(DRCfile):
     MSstageconf.MSOutFileType = ConfigDict.MSOutFileType
     stage = MSstage(OutS,MSstageconf)
     stage.process()
+    stage.Normalize()
+    stage.WriteOutput()
     
     # 13 - TC stage. Test Convolution.
 
@@ -328,6 +356,8 @@ def drc(DRCfile):
     
     stage = TCstage(OutInS,OutS,TCstageconf)
     stage.process()
+    stage.Normalize()
+    stage.WriteOutput()
         
                   
 if __name__ == '__main__':
