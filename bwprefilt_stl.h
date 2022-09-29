@@ -8,10 +8,10 @@
 
 using namespace std;
 
-STLvectorReal *STL_BWPreFilt(STLvectorReal *Sig, int IBS, int FBS, int FilterLen, 
-			     int BandSplit, DLReal WindowExponent, int SampleFreq, 
-			     DLReal StartFreq, DLReal EndFreq, int WindowGap, 
-			     WindowType WType,BWPPrefilteringType SLPType);
+STLvectorReal STL_BWPreFilt(STLvectorReal Sig, int IBS, int FBS, int FilterLen, 
+			    int BandSplit, DLReal WindowExponent, int SampleFreq, 
+			    DLReal StartFreq, DLReal EndFreq, int WindowGap, 
+			    WindowType WType,BWPPrefilteringType SLPType);
 
 
 

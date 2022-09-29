@@ -8,51 +8,38 @@ DRCSignal::DRCSignal()
   WStart = 0;
   WLen = 0;
   SampleRate = 0;
-  Data = new STLvectorReal();
   Path = NULL;
 }
-DRCSignal::DRCSignal(DRCSignal *SCopy)
+DRCSignal::DRCSignal(DRCSignal &SCopy)
 {
-  PreWindowLen = SCopy->getPreWindowLen();
-  PSStart = SCopy->getPSStart();
-  PSEnd = SCopy->getPSEnd();
-  WStart = SCopy->getWStart();
-  WLen = SCopy->getWLen();
-  SampleRate = SCopy->getSampleRate();
-  Path = SCopy->getPath();
-  Data = new STLvectorReal();
-  setData(SCopy->getData());
+  PreWindowLen = SCopy.getPreWindowLen();
+  Data = SCopy.getData();
+  PSStart = SCopy.getPSStart();
+  PSEnd = SCopy.getPSEnd();
+  WStart = SCopy.getWStart();
+  WLen = SCopy.getWLen();
+  SampleRate = SCopy.getSampleRate();
+  Path = SCopy.getPath();
 }
-void DRCSignal::setParams(DRCSignal *SCopy)
+void DRCSignal::setParams(DRCSignal &SCopy)
 {
-  PreWindowLen = SCopy->getPreWindowLen();
-  PSStart = SCopy->getPSStart();
-  PSEnd = SCopy->getPSEnd();
-  WStart = SCopy->getWStart();
-  WLen = SCopy->getWLen();
-  SampleRate = SCopy->getSampleRate();
-  Path = SCopy->getPath();
+  PreWindowLen = SCopy.getPreWindowLen();
+  PSStart = SCopy.getPSStart();
+  PSEnd = SCopy.getPSEnd();
+  WStart = SCopy.getWStart();
+  WLen = SCopy.getWLen();
+  SampleRate = SCopy.getSampleRate();
+  Path = SCopy.getPath();
 }
-void DRCSignal::setData(STLvectorReal *InData)
+void DRCSignal::setData(STLvectorReal InData, int psstart, int psend)
 {
-  if(Data->size() > 0)
-    Data->clear();
-  for(unsigned int i = 0; i < InData->size(); i++)
-    Data->push_back(InData->at(i));
-  PSStart = 0;
-  PSEnd = InData->size();
-}
-void DRCSignal::setData(STLvectorReal *InData, int psstart, int psend)
-{
-  Data->clear();
-  for(int i = psstart; i < psend; i++)
-    Data->push_back(InData->at(i));
+  Data = InData;
   PSStart = psstart;
   PSEnd = psend;
 }
 void DRCSignal::clearData(void)
 {
-  Data->clear();
+  Data.clear();
 }
 void DRCSignal::setPreWindowLen(int prewindowlen)
 {
@@ -91,7 +78,7 @@ void DRCSignal::setPath(char *path)
   return;
 }
 
-STLvectorReal *DRCSignal::getData(void)
+STLvectorReal DRCSignal::getData(void)
 {
   return Data;
 }
@@ -135,8 +122,6 @@ void DRCSignal::Normalize(DLReal normfactor, char* normtype)
 bool DRCSignal::WriteSignal(char* outfile, char* outfiletype) 
 {
   char *path_outfile;
-  IFileType ftype;
-  
   if (outfile !=NULL) {
     if(Path!=NULL) {
       path_outfile = (char*) malloc(sizeof(char)*(1+strlen(Path)+strlen(outfile)));
@@ -146,24 +131,9 @@ bool DRCSignal::WriteSignal(char* outfile, char* outfiletype)
       path_outfile = (char*) malloc(sizeof(char)*(1+strlen(outfile)));
       strcpy(path_outfile,outfile);
     }
-    switch(outfiletype[0]) {
-    case 'I':
-      ftype = PcmInt16Bit;
-      break;
-    case 'F':
-      ftype = PcmFloat32Bit;
-      break;
-    case 'D':
-      ftype = PcmFloat64Bit;
-      break;
-    default:
-      sputs("WriteSignal: undefined file data type (I, F or D)");
-    return false;
-    break; 
-    }
     printf("Saving output signal: %s\n",path_outfile);
-    if (SND_WriteSignal(path_outfile, Data, WStart, WLen, SampleRate, ftype) == false) {
-      sputs("Input signal component save failed");
+    if (SND_WriteSignal(path_outfile,Data,WStart,WLen, SampleRate, (IFileType) outfiletype[0]) == false) {
+      printf("Input signal component save failed.\n");
       return false;
     }
     return true;
@@ -171,16 +141,17 @@ bool DRCSignal::WriteSignal(char* outfile, char* outfiletype)
   return false;
 }
 
-STLvectorReal *STL_ToeplitzSolve(STLvectorReal *Av, STLvectorReal *Bv, unsigned int N)
+STLvectorReal STL_ToeplitzSolve(STLvectorReal Av, STLvectorReal Bv, unsigned int N)
 {
   unsigned int I;
   DLReal *A;
   DLReal *B;
   DLReal *X;
-  STLvectorReal *Xv = new STLvectorReal();
+  STLvectorReal Xv;
 
-  if(Av->size() < N || Bv->size() < N) {
-    sputs("Toeplitz vectors size less than N factor");
+  if(Av.size() < N || Bv.size() < N) {
+    printf("Toeplitz vectors size less than N factor\n");
+    fflush(stdout);
     return Xv;
   }
   A = new DLReal[N];
@@ -199,35 +170,32 @@ STLvectorReal *STL_ToeplitzSolve(STLvectorReal *Av, STLvectorReal *Bv, unsigned 
     return Xv;
   }
   for(I = 0; I < N; I++) { 
-    A[I] = Av->at(I);
-    B[I] = Bv->at(I);
+    A[I] = Av[I];
+    B[I] = Bv[I];
   }
   if(ToeplitzSolve(A, B, X, N) == false)
     return Xv;
   for(I = 0; I < N; I++)
-    Xv->push_back(X[I]);
-  delete A;
-  delete B;
-  delete X;
+    Xv.push_back(X[I]);
   return Xv;
 }
 
-STLvectorReal *STL_KirkebyFDInvert(STLvectorReal *InSig, unsigned int InSigLen, 
-				   unsigned int InvFilterSigLen, STLvectorReal *EffortSig, 
-				   DLReal EffortFactor, int MExp)
+STLvectorReal STL_KirkebyFDInvert(const STLvectorReal InSig, unsigned int InSigLen, 
+				  unsigned int InvFilterSigLen, const STLvectorReal EffortSig, 
+				  DLReal EffortFactor, int MExp)
 {
   unsigned int I;
   DLReal *InS;
   DLReal *EffortS;
   DLReal *InvFilterS;
-  STLvectorReal *InvFilterSig = new STLvectorReal();
+  STLvectorReal InvFilterSig;
 
-  InS = new DLReal[InSig->size()];
+  InS = new DLReal[InSig.size()];
   if (InS == NULL) {
     sputs("Memory allocation failed.");
     return InvFilterSig;
   }
-  EffortS = new DLReal[EffortSig->size()];
+  EffortS = new DLReal[EffortSig.size()];
   if (EffortS == NULL) {
     sputs("Memory allocation failed.");
     return InvFilterSig;
@@ -237,34 +205,32 @@ STLvectorReal *STL_KirkebyFDInvert(STLvectorReal *InSig, unsigned int InSigLen,
     sputs("Memory allocation failed.");
     return InvFilterSig;
   }
-  for(I = 0; I < InSig->size(); I++) 
-    InS[I] = InSig->at(I);
-  for(I = 0; I < EffortSig->size(); I++) 
-    EffortS[I] = EffortSig->at(I);
-  if(KirkebyFDInvert(InS, InSig->size(), InvFilterS, InvFilterSigLen, EffortS, EffortSig->size(), EffortFactor,MExp)== true) {
+  for(I = 0; I < InSig.size(); I++) 
+    InS[I] = InSig[I];
+  for(I = 0; I < EffortSig.size(); I++) 
+    EffortS[I] = EffortSig[I];
+  if(KirkebyFDInvert(InS, InSig.size(), InvFilterS, InvFilterSigLen, EffortS, EffortSig.size(), EffortFactor,MExp)== true) {
     for(I = 0; I < InvFilterSigLen; I++)
-      InvFilterSig->push_back(InvFilterS[I]);
+      InvFilterSig.push_back(InvFilterS[I]);
   }
-  delete InS;
-  delete EffortS;
-  delete InvFilterS;
   return InvFilterSig;
 }
-STLvectorReal *STL_PEISMPKirkebyFDInvert(STLvectorReal *MPSig, STLvectorReal *EPSig, 
-					unsigned int InvFilterSigLen, DLReal EffortFactor, int MExp)
+STLvectorReal STL_PEISMPKirkebyFDInvert(const STLvectorReal MPSig, const STLvectorReal EPSig, 
+					unsigned int InvFilterSigLen, DLReal EffortFactor, 
+					int MExp)
 {
   unsigned int I;
   DLReal *MPS;
   DLReal *EPS;
   DLReal *InvFilterS;
-  STLvectorReal *InvFilterSig = new STLvectorReal();
+  STLvectorReal InvFilterSig;
   
-  MPS = new DLReal[MPSig->size()];
+  MPS = new DLReal[MPSig.size()];
   if (MPS == NULL) {
     sputs("Memory allocation failed.");
     return InvFilterSig;
   }
-  EPS = new DLReal[EPSig->size()];
+  EPS = new DLReal[EPSig.size()];
   if (EPS == NULL) {
     sputs("Memory allocation failed.");
     return InvFilterSig;
@@ -274,36 +240,33 @@ STLvectorReal *STL_PEISMPKirkebyFDInvert(STLvectorReal *MPSig, STLvectorReal *EP
     sputs("Memory allocation failed.");
     return InvFilterSig;
   }
-  for(I = 0; I < MPSig->size(); I++) 
-    MPS[I] = MPSig->at(I);
-  for(I = 0; I < EPSig->size(); I++) 
-    EPS[I] = EPSig->at(I);
-  if(PEISMPKirkebyFDInvert(MPS, MPSig->size(), EPS, EPSig->size(), InvFilterS, InvFilterSigLen, EffortFactor, MExp) == true) {
+  for(I = 0; I < MPSig.size(); I++) 
+    MPS[I] = MPSig[I];
+  for(I = 0; I < EPSig.size(); I++) 
+    EPS[I] = EPSig[I];
+  if(PEISMPKirkebyFDInvert(MPS, MPSig.size(), EPS, EPSig.size(), InvFilterS, InvFilterSigLen, EffortFactor, MExp) == true) {
     for(I = 0; I < InvFilterSigLen; I++)
-      InvFilterSig->push_back(InvFilterS[I]);
+      InvFilterSig.push_back(InvFilterS[I]);
   }
-  delete MPS;
-  delete EPS;
-  delete InvFilterS;
   return InvFilterSig;
 }
 
-STLvectorReal *STL_PEMSMPKirkebyFDInvert(STLvectorReal *MPSig, STLvectorReal *EPSig,
-					 unsigned int InvFilterSigLen, DLReal EffortFactor, 
-					 int PEStart, int PETransition, int MExp)
+STLvectorReal STL_PEMSMPKirkebyFDInvert(const STLvectorReal MPSig, const STLvectorReal EPSig,
+					unsigned int InvFilterSigLen, DLReal EffortFactor, 
+					int PEStart, int PETransition, int MExp)
 {
   unsigned int I;
   DLReal *MPS;
   DLReal *EPS;
   DLReal *InvFilterS;
-  STLvectorReal *InvFilterSig = new STLvectorReal();
+  STLvectorReal InvFilterSig;
   
-  MPS = new DLReal[MPSig->size()];
+  MPS = new DLReal[MPSig.size()];
   if (MPS == NULL) {
     sputs("Memory allocation failed.");
     return InvFilterSig;
   }
-  EPS = new DLReal[EPSig->size()];
+  EPS = new DLReal[EPSig.size()];
   if (EPS == NULL) {
     sputs("Memory allocation failed.");
     return InvFilterSig;
@@ -313,21 +276,18 @@ STLvectorReal *STL_PEMSMPKirkebyFDInvert(STLvectorReal *MPSig, STLvectorReal *EP
     sputs("Memory allocation failed.");
     return InvFilterSig;
   }
-  for(I = 0; I < MPSig->size(); I++) 
-    MPS[I] = MPSig->at(I);
-  for(I = 0; I < EPSig->size(); I++) 
-    EPS[I] = EPSig->at(I);
-  if(PEMSMPKirkebyFDInvert(MPS, MPSig->size(), EPS, EPSig->size(), InvFilterS, InvFilterSigLen, EffortFactor, PEStart, PETransition, MExp) == true) {
+  for(I = 0; I < MPSig.size(); I++) 
+    MPS[I] = MPSig[I];
+  for(I = 0; I < EPSig.size(); I++) 
+    EPS[I] = EPSig[I];
+  if(PEMSMPKirkebyFDInvert(MPS, MPSig.size(), EPS, EPSig.size(), InvFilterS, InvFilterSigLen, EffortFactor, PEStart, PETransition, MExp) == true) {
     for(I = 0; I < InvFilterSigLen; I++)
-      InvFilterSig->push_back(InvFilterS[I]);
+      InvFilterSig.push_back(InvFilterS[I]);
   }
-  delete MPS;
-  delete EPS;
-  delete InvFilterS;
   return InvFilterSig;
 }
 
-STLvectorReal *STL_PETFDInvert(STLvectorReal *MPSig, STLvectorReal *EPSig, 
+STLvectorReal STL_PETFDInvert(const STLvectorReal MPSig, const STLvectorReal EPSig, 
 			      unsigned int InvFilterSigLen, char PEType, int PELowerWindow, 
 			      int PEUpperWindow, int PEStartFreq, int PEEndFreq, 
 			      int PEFilterLen, DLReal FSharpness, int PEBandSplit, 
@@ -338,14 +298,14 @@ STLvectorReal *STL_PETFDInvert(STLvectorReal *MPSig, STLvectorReal *EPSig,
   DLReal *MPS;
   DLReal *EPS;
   DLReal *InvFilterS;
-  STLvectorReal *InvFilterSig = new STLvectorReal();
+  STLvectorReal InvFilterSig;
   
-  MPS = new DLReal[MPSig->size()];
+  MPS = new DLReal[MPSig.size()];
   if (MPS == NULL) {
     sputs("Memory allocation failed.");
     return InvFilterSig;
   }
-  EPS = new DLReal[EPSig->size()];
+  EPS = new DLReal[EPSig.size()];
   if (EPS == NULL) {
     sputs("Memory allocation failed.");
     return InvFilterSig;
@@ -355,18 +315,15 @@ STLvectorReal *STL_PETFDInvert(STLvectorReal *MPSig, STLvectorReal *EPSig,
     sputs("Memory allocation failed.");
     return InvFilterSig;
   }
-  for(I = 0; I < MPSig->size(); I++) 
-    MPS[I] = MPSig->at(I);
-  for(I = 0; I < EPSig->size(); I++) 
-    EPS[I] = EPSig->at(I);
-  if(PETFDInvert(MPS, MPSig->size(), EPS, EPSig->size(), InvFilterS,InvFilterSigLen, PEType, 
+  for(I = 0; I < MPSig.size(); I++) 
+    MPS[I] = MPSig[I];
+  for(I = 0; I < EPSig.size(); I++) 
+    EPS[I] = EPSig[I];
+  if(PETFDInvert(MPS, MPSig.size(), EPS, EPSig.size(), InvFilterS,InvFilterSigLen, PEType, 
 		 PELowerWindow, PEUpperWindow, PEStartFreq, PEEndFreq, PEFilterLen, FSharpness,
 		 PEBandSplit, PEWindowExponent, SLPType, OGainFactor, SampleRate, MExp)== true) {
     for(I = 0; I < InvFilterSigLen; I++)
-      InvFilterSig->push_back(InvFilterS[I]);
+      InvFilterSig.push_back(InvFilterS[I]);
   }
-  delete MPS;
-  delete EPS;
-  delete InvFilterS;
   return InvFilterSig;
 }

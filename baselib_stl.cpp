@@ -1,15 +1,15 @@
 #include "baselib_stl.h"
 
 /* Signal reading from a raw file. Data length InitWindow, centered at ImpulseCenter */
-STLvectorReal *STL_ReadSignal(const char * FName,const int InitWindow, const int ImpulseCenter,
-			      const IFileType FType,int &PreSpikeStart, int &PostSpikeEnd)
+STLvectorReal STL_ReadSignal(const char * FName,const int InitWindow, const int ImpulseCenter,
+			 const IFileType FType,int &PreSpikeStart, int &PostSpikeEnd)
 {
   unsigned int I; 
   int MaxWindow, RWDim;
 
   FILE * IOF;
-  STLvectorReal *RetSig = new STLvectorReal();
 
+  STLvectorReal RetSig;
   switch (FType)
     {
     case PcmFloat64Bit:
@@ -35,20 +35,20 @@ STLvectorReal *STL_ReadSignal(const char * FName,const int InitWindow, const int
   DLReal *Dst = new DLReal[MaxWindow];
   if(ReadSignal(FName, Dst, MaxWindow, ImpulseCenter, FType, &PreSpikeStart, &PostSpikeEnd) == true)
       for(I = 0; I < (unsigned int)MaxWindow; I++)
-	RetSig->push_back(Dst[I]);
+	RetSig.push_back(Dst[I]);
   delete Dst;
   return RetSig;
 }
 
 
-STLvectorReal *STL_SND_ReadSignal(const char * FName, const int InitWindow, const int ImpulseCenter, int &PreSpikeStart, int &PostSpikeEnd)
+STLvectorReal STL_SND_ReadSignal(const char * FName, const int InitWindow, const int ImpulseCenter, int &PreSpikeStart, int &PostSpikeEnd)
 {
   SNDFILE* sf_file;
   SF_INFO sf_info;
   int MaxWindow;
 
   unsigned int I; 
-  STLvectorReal *RetSig = new STLvectorReal();
+  STLvectorReal RetSig;
 
   sf_info.format = 0;
 
@@ -66,16 +66,16 @@ STLvectorReal *STL_SND_ReadSignal(const char * FName, const int InitWindow, cons
 
   if(SND_ReadSignal(FName, Dst, MaxWindow, ImpulseCenter, &PreSpikeStart, &PostSpikeEnd) == true)
       for(I = 0; I < (unsigned int)MaxWindow; I++)
-	RetSig->push_back(Dst[I]);
+	RetSig.push_back(Dst[I]);
   delete Dst;
   return RetSig;
   } 
 
-bool STL_WriteSignal(const char * FName,STLvectorReal *Src,const unsigned int WStart,
+bool STL_WriteSignal(const char * FName,const STLvectorReal Src,const unsigned int WStart,
 		     const unsigned int WLen, const IFileType FType)
 {
   bool retval;
-  unsigned int I, J, SSize = Src->size();
+  unsigned int I, J, SSize = Src.size();
 
   if (SSize < WStart)
     return false;
@@ -83,46 +83,47 @@ bool STL_WriteSignal(const char * FName,STLvectorReal *Src,const unsigned int WS
   if (SSize < WStart + WLen)
     {
       for(J = 0,I = WStart; I < SSize; I++, J++)
-	Dst[J] = Src->at(I);
+	Dst[J] = Src[I];
       for(J = SSize - WStart; J < WLen; J++)
 	Dst[J] = 0;
     }
   else
     for(J = 0,I = WStart; J < WLen; I++, J++)
-      Dst[J] = Src->at(I);
+      Dst[J] = Src[I];
   retval = (WriteSignal(FName,Dst,WLen,FType)== true);
   delete Dst;
   return retval;
 }
 
-bool SND_WriteSignal(const char * FName,STLvectorReal *Src,const unsigned int WStart, 
+bool SND_WriteSignal(const char * FName,const STLvectorReal Src,const unsigned int WStart, 
 		     const unsigned int WLen, const int SampleRate, const IFileType FType)
 
 {
   SNDFILE* sf_file;
   SF_INFO sf_info;
   int short_mask;
-  unsigned int I, J, SSize = Src->size();
+  unsigned int I, J, SSize = Src.size();
   
   if (SSize < WStart)
     return false;
-
+  
   DLReal *Dst = new DLReal[WLen];
   if (SSize < WStart + WLen) {
     for(J = 0,I = WStart; I < SSize; I++, J++)
-      Dst[J] = Src->at(I);
+      Dst[J] = Src[I];
     for(J = SSize - WStart; J < WLen; J++)
       Dst[J] = 0;
   }
   else
     for(J = 0,I = WStart; J < WLen; I++, J++)
-      Dst[J] = Src->at(I);
+      Dst[J] = Src[I];
   
   sf_info.samplerate = SampleRate;
   sf_info.channels = 1;
   sf_info.frames = 0;
   sf_info.sections = 0;
   sf_info.seekable = 0;
+
   switch (FType) 
     {
     case PcmFloat64Bit:
@@ -138,71 +139,74 @@ bool SND_WriteSignal(const char * FName,STLvectorReal *Src,const unsigned int WS
       break;
     }
   sf_info.format = SF_FORMAT_WAV | short_mask;
+  
   if((sf_file = sf_open(FName, SFM_WRITE, &sf_info)) == NULL) {
     fprintf(stderr, "cannot open sndfile \"%s\" for output (%s)\n",FName, sf_strerror(sf_file));
     return false;
   }
+  
   sf_writef_double(sf_file, Dst, WLen);
   sf_close(sf_file);
   return true;
 }
 
-bool STL_OverwriteSignal(const char * FName,STLvectorReal *Src,const int Skip, const IFileType FType)
+bool STL_OverwriteSignal(const char * FName,const STLvectorReal Src,const int Skip, 
+			 const IFileType FType)
 {
   bool retval;
-  unsigned int I, SSize = Src->size();
+  unsigned int I, SSize = Src.size();
   DRCFloat *Dst = new DRCFloat[SSize];
   for(I = 0; I < SSize; I++)
-    Dst[I] = Src->at(I);
+    Dst[I] = Src[I];
   retval = (OverwriteSignal(FName,Dst,SSize,Skip,FType) == true);
   delete Dst;
   return retval;  
 }
 
 /* Calcola l'autocorrelazione del sgnale S */
-STLvectorReal *STL_AutoCorrelation(STLvectorReal *Src)
+STLvectorReal STL_AutoCorrelation(const STLvectorReal Src)
 {
-  STLvectorReal *RetSig = new STLvectorReal();
-  unsigned int I, SSize = Src->size();
+  STLvectorReal RetSig;
+  unsigned int I, SSize = Src.size();
   DLReal *Dst = new DLReal[SSize];
   for(I = 0; I < SSize; I++)
-    Dst[I] = Src->at(I);
+    Dst[I] = Src[I];
   if (AutoCorrelation(Dst,SSize) == true)
     for(I = 0; I < SSize; I++)
-      RetSig->push_back(Dst[I]);
+      RetSig.push_back(Dst[I]);
   delete Dst;
   return RetSig;
 }
-STLvectorReal *STL_CrossCorrelation(STLvectorReal *S1, STLvectorReal *S2)
+STLvectorReal STL_CrossCorrelation(STLvectorReal S1, STLvectorReal S2)
 {
-  STLvectorReal *RetSig = new STLvectorReal();
-  unsigned int I, SSize1 = S1->size(), SSize2 = S2->size(), SSizeR = S1->size()*2-1;
+  STLvectorReal RetSig;
+  unsigned int I, SSize1 = S1.size(), SSize2 = S2.size(), SSizeR = S1.size()*2-1;
   DLReal *Dst1 = new DLReal[SSize1];
   DLReal *Dst2 = new DLReal[SSize2];
   DLReal *retvec = new DLReal[SSizeR];
   for(I = 0; I < SSize1; I++)
-    Dst1[I] = S1->at(I);
+    Dst1[I] = S1[I];
   for(I = 0; I < SSize2; I++)
-    Dst2[I] = S2->at(I);
+    Dst2[I] = S2[I];
   if (CrossCorrelation(Dst1,Dst2,SSize1,retvec) == true)
     for(I = 0; I < SSizeR; I++)
-      RetSig->push_back(retvec[I]);
+      RetSig.push_back(retvec[I]);
   delete Dst1;
   delete Dst2;
   delete retvec;
   return RetSig;
 }
-STLvectorReal *STL_GroupDelay(STLvectorReal *Src)
+STLvectorReal STL_GroupDelay(const STLvectorReal Src)
 {
-  STLvectorReal *RetSig = new STLvectorReal();
-  unsigned int I, SSize = Src->size();
+  STLvectorReal RetSig;
+  unsigned int I, SSize = Src.size();
   DLReal *Dst = new DLReal[SSize];
   DLReal *retvec = new DLReal[SSize];
   for(I = 0; I < SSize; I++)
-    Dst[I] = Src->at(I);
+    Dst[I] = Src[I];
   if (GroupDelay(Dst,SSize,retvec) == true)
     for(I = 0; I < SSize; I++)
-      RetSig->push_back(retvec[I]);
+      RetSig.push_back(retvec[I]);
   delete Dst;
   delete retvec;
   return RetSig;
@@ -272,8 +276,8 @@ int SND_FindMaxPcm(const char * FName)
   return result;
 }
 
-bool STL_ReadPoints(char* CorrFile, const TFMagType MagType, STLvectorReal *FilterFreq,
-		    STLvectorReal *FilterM, STLvectorReal *FilterP, const int NPoints,
+bool STL_ReadPoints(char* CorrFile, const TFMagType MagType, STLvectorReal& FilterFreq,
+		    STLvectorReal& FilterM, STLvectorReal& FilterP, const int NPoints,
 		    int SampleRate)
 {
   int I;
@@ -285,9 +289,9 @@ bool STL_ReadPoints(char* CorrFile, const TFMagType MagType, STLvectorReal *Filt
     {
       for(I = 0; I < NPoints; I++)
 	{
-	  FilterFreq->push_back(filterfreq[I]);
-	  FilterM->push_back(filterm[I]);
-	  FilterP->push_back(filterp[I]);
+	  FilterFreq.push_back(filterfreq[I]);
+	  FilterM.push_back(filterm[I]);
+	  FilterP.push_back(filterp[I]);
 	}
       return true;
     }
@@ -300,8 +304,8 @@ bool GlSweep(DLReal Rate, DLReal Amplitude, DLReal HzStart, DLReal HzEnd, DLReal
 {
 
   /* Base sweep generation */
-  STLvectorReal *SweepSig = new STLvectorReal();
-  STLvectorReal *InvSig = new STLvectorReal();
+  STLvectorReal SweepSig;
+  STLvectorReal InvSig;
   int SweepLen;
   int SilenceLen;
   DLReal W1;
@@ -360,7 +364,7 @@ bool GlSweep(DLReal Rate, DLReal Amplitude, DLReal HzStart, DLReal HzEnd, DLReal
   /* Initial silence */
   FS = (DLReal) 0.0;
   for (I = 0;I < SilenceLen;I++)
-    SweepSig->push_back((DLReal)0);
+    SweepSig.push_back((DLReal)0);
     //fwrite(&FS,sizeof(float),1,OF);
   
   /* Initial lead in */
@@ -368,7 +372,7 @@ bool GlSweep(DLReal Rate, DLReal Amplitude, DLReal HzStart, DLReal HzEnd, DLReal
     Sample = (DLReal) DLSin(S1 * (exp(I * S2) - 1.0));
     WC = (DLReal) (0.42 - 0.5 * DLCos(WC1In * I) + 0.08 * DLCos(WC2In * I));
     FS = (float) (Sample * WC * Amplitude);
-    SweepSig->push_back(FS);
+    SweepSig.push_back(FS);
     //fwrite(&FS,sizeof(float),1,OF);
   }
   
@@ -376,7 +380,7 @@ bool GlSweep(DLReal Rate, DLReal Amplitude, DLReal HzStart, DLReal HzEnd, DLReal
   for (I = LeadInLen;I < SweepLen - LeadOutLen;I++) {
     Sample = (DLReal) DLSin(S1 * (exp(I * S2) - 1.0));
     FS = (float) (Sample * Amplitude);
-    SweepSig->push_back(FS);
+    SweepSig.push_back(FS);
     //fwrite(&FS,sizeof(float),1,OF);
   }
   
@@ -385,20 +389,20 @@ bool GlSweep(DLReal Rate, DLReal Amplitude, DLReal HzStart, DLReal HzEnd, DLReal
     Sample = (DLReal) DLSin(S1 * (exp(I * S2) - 1.0));
     WC = (DLReal) (0.42 - 0.5 * DLCos(WC1Out * J) + 0.08 * DLCos(WC2Out * J));
     FS = (float) (Sample * WC * Amplitude);
-    SweepSig->push_back(FS);
+    SweepSig.push_back(FS);
     //fwrite(&FS,sizeof(float),1,OF);
   }
   
   /* Final silence */
   FS = (DLReal) 0.0;
   for (I = 0;I < SilenceLen;I++)
-    SweepSig->push_back((DLReal)0);
+    SweepSig.push_back((DLReal)0);
     //fwrite(&FS,sizeof(float),1,OF);
   
   /* Close the sweep file */
   sputs("Sweep file generated.");
 
-  SND_WriteSignal(SweepFile, SweepSig, 0, SweepSig->size(), Rate, PcmFloat32Bit);
+  SND_WriteSignal(SweepFile, SweepSig, 0, SweepSig.size(), Rate, PcmFloat32Bit);
   
   /* Computes the inverse normalization factor */
   sputs("Inverse normalization computation...");
@@ -445,7 +449,7 @@ bool GlSweep(DLReal Rate, DLReal Amplitude, DLReal HzStart, DLReal HzEnd, DLReal
     Sample = (DLReal) DLSin(S1 * (exp(J * S2) - 1.0));
     WC = (DLReal) (0.42 - 0.5 * DLCos(WC1Out * I) + 0.08 * DLCos(WC2Out * I));
     FS = (float) (RMS * Sample * WC * Decay);
-    InvSig->push_back(FS);
+    InvSig.push_back(FS);
     //fwrite(&FS,sizeof(float),1,OF);
   }
   
@@ -454,7 +458,7 @@ bool GlSweep(DLReal Rate, DLReal Amplitude, DLReal HzStart, DLReal HzEnd, DLReal
     Decay = (DLReal) pow(0.5,I / DecayTime);
     Sample = (DLReal) DLSin(S1 * (exp(J * S2) - 1.0));
     FS = (float) (RMS * Sample * Decay);
-    InvSig->push_back(FS);
+    InvSig.push_back(FS);
     //fwrite(&FS,sizeof(float),1,OF);
   }
   
@@ -464,18 +468,16 @@ bool GlSweep(DLReal Rate, DLReal Amplitude, DLReal HzStart, DLReal HzEnd, DLReal
     Sample = (DLReal) DLSin(S1 * (exp(J * S2) - 1.0));
     WC = (DLReal) (0.42 - 0.5 * DLCos(WC1In * J) + 0.08 * DLCos(WC2In * J));
     FS = (float) (RMS * Sample * WC * Decay);
-    InvSig->push_back(FS);
+    InvSig.push_back(FS);
     //fwrite(&FS,sizeof(float),1,OF);
   }
   
   // Close the inverse file
   sputs("Inverse file generated.");
 
-  SND_WriteSignal(InverseFile, InvSig, 0, InvSig->size(), Rate, PcmFloat32Bit);
+  SND_WriteSignal(InverseFile, InvSig, 0, InvSig.size(), Rate, PcmFloat32Bit);
   
   // Execution completed
-  delete SweepSig;
-  delete InvSig; 
   return true;
 }
 
@@ -582,9 +584,9 @@ bool LsConv(char *SweepFile, char *InverseFile, char *OutFile)
   return true;
 
   /* Memory deallocation */
-  delete Sweep;
-  delete Inverse;
-  delete Convol ;
+  delete(Sweep);
+  delete(Inverse);
+  delete(Convol);
   /* Execution completed */
   sputs("Completed.");
   return true;
