@@ -40,8 +40,6 @@ class WFstage
   void NewInCfg(WFParmsType InCfg);
   ~WFstage() {};
   void process(void);
-  void Normalize(void);
-  void WriteOutput(void);
   WFParmsType getWFParms(void) { return Cfg; };
   DRCSignal *getOutSig() { return OutSig; };
   

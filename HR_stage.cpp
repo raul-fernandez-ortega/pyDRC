@@ -5,8 +5,8 @@ HRstage::HRstage(DRCSignal *MPInputSig,DRCSignal *EPInputSig, HRParmsType InCfg)
   Cfg = InCfg;
   MPInSig = MPInputSig;
   EPInSig = EPInputSig;
-  MPSignal = new DRCSignal(MPInputSig);
-  EPSignal = new DRCSignal(EPInputSig);
+  MPSignal = new DRCSignal(*MPInputSig);
+  EPSignal = new DRCSignal(*EPInputSig);
 }
 
 void HRstage::NewInputSignal(DRCSignal *MPInputSig, DRCSignal *EPInputSig)
@@ -15,8 +15,8 @@ void HRstage::NewInputSignal(DRCSignal *MPInputSig, DRCSignal *EPInputSig)
   EPInSig = EPInputSig;
   delete MPSignal;
   delete EPSignal;
-  MPSignal = new DRCSignal(MPInputSig);
-  EPSignal = new DRCSignal(EPInputSig);
+  MPSignal = new DRCSignal(*MPInputSig);
+  EPSignal = new DRCSignal(*EPInputSig);
 }
 
 void HRstage::NewInCfg(HRParmsType InCfg)
@@ -34,17 +34,17 @@ void HRstage::process(void)
   DLReal *EPSig;
   DLReal *EPPFSig;
 
-  MPDataLen = MPInSig->getData()->size();
-  EPDataLen = EPInSig->getData()->size();
+  MPDataLen = MPInSig->getData().size();
+  EPDataLen = EPInSig->getData().size();
   MPSignal->clearData();
   EPSignal->clearData();
   MPPFSig = new DLReal[MPDataLen];
   for(I = 0; I < MPDataLen; I++) {
-    MPPFSig[I] = MPInSig->getData()->at(I);
+    MPPFSig[I] = MPInSig->Data[I];
   }
   EPSig = new DLReal[EPDataLen];
   for(I = 0; I < EPDataLen; I++) {
-    EPSig[I] = EPInSig->getData()->at(I);
+    EPSig[I] = EPInSig->Data[I];
   }
   if (Cfg.HRMPHDRecover[0] == 'Y') {
     sputs("Allocating homomorphic deconvolution arrays.");
@@ -99,7 +99,7 @@ void HRstage::process(void)
       BlackmanWindow(MPEPSig,MPInSig->getWLen());
   }
   for(I=0; I < MPDataLen; I++)
-    MPSignal->Data->push_back(MPPFSig[I]);
+    MPSignal->Data.push_back(MPPFSig[I]);
   
   /* Controlla se si deve preservare la componente EP della fase minima */
   if (Cfg.HRMPHDRecover[0] == 'Y' && Cfg.HRMPEPPreserve[0] == 'Y') {
@@ -129,43 +129,13 @@ void HRstage::process(void)
   /* Recupera la componente EP */
   
   for(I = MPInSig->getWLen() / 2; I < MPEPSigLen; I++)
-    EPSignal->Data->push_back(EPPFSig[I]);
+    EPSignal->Data.push_back(EPPFSig[I]);
   EPSignal->setWStart(EPInSig->getWStart());
   EPSignal->setWLen(EPInSig->getWLen());
   MPSignal->setWStart(MPInSig->getWStart());
   MPSignal->setWLen(MPInSig->getWLen());
-  //MPSignal->Normalize(Cfg.HRMPNormFactor, Cfg.HRMPNormType);
-  //MPSignal->WriteSignal(Cfg.HRMPOutFile,  Cfg.HRMPOutFileType);
-  //EPSignal->Normalize(Cfg.HREPNormFactor, Cfg.HREPNormType);
-  //EPSignal->WriteSignal(Cfg.HREPOutFile,  Cfg.HREPOutFileType);
-}
-
-void HRstage::Normalize(void)
-{
-  if (Cfg.HRMPNormFactor > 0) {
-    sputs("Homomorphic Deconvolution minimum phase signal normalization.");
-    MPSignal->Normalize(Cfg.HRMPNormFactor, Cfg.HRMPNormType);
-  }
-  if (Cfg.HREPNormFactor > 0) {
-    sputs("Homomorphic deconvolution excess phase signal normalization.");
-    EPSignal->Normalize(Cfg.HREPNormFactor, Cfg.HREPNormType);
-  }
-}
-
-void HRstage::WriteOutput(void)
-{
-   if (Cfg.HRMPOutFile != NULL) {
-     sputs("Saving Homomorphic Deconvolution minimum phase signal.");
-     if (MPSignal->WriteSignal(Cfg.HRMPOutFile,  Cfg.HRMPOutFileType) == false) {
-       sputs("Homomorphic Deconvolution minimum phase signal save failed.");
-       return;
-     }
-   }
-   if (Cfg.HREPOutFile != NULL) {
-     sputs("Saving Homomorphic Deconvolution excess phase signal.");
-     if (EPSignal->WriteSignal(Cfg.HREPOutFile,  Cfg.HREPOutFileType) == false) {
-       sputs("Homomorphic Deconvolution excess phase signal save failed.");
-       return;
-     }
-   }
+  MPSignal->Normalize(Cfg.HRMPNormFactor, Cfg.HRMPNormType);
+  MPSignal->WriteSignal(Cfg.HRMPOutFile,  Cfg.HRMPOutFileType);
+  EPSignal->Normalize(Cfg.HREPNormFactor, Cfg.HREPNormType);
+  EPSignal->WriteSignal(Cfg.HREPOutFile,  Cfg.HREPOutFileType);
 }

@@ -46,8 +46,6 @@ class ISstage
   void NewInCfg(ISParmsType InCfg);
   ~ISstage();
   void process(void);
-  void Normalize(void);
-  void WriteOutput(void);
   ISParmsType getCfgParms(void) { return Cfg; };
   DRCSignal *getPCOutSig() { return PCOutSig; };
   DRCSignal *getISOutSig() { return ISOutSig; };

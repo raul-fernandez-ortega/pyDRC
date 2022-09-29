@@ -31,21 +31,19 @@
 /* Prefiltratura a bande tramite sliding lowpass di un segnale */
 
 #ifndef SLPreFilt_h
-#define SLPreFilt_h
+	#define SLPreFilt_h
 
-/* Inclusioni */
-#include "dsplib.h"
-#include "dspwind.h"
+	/* Inclusioni */
+	#include "dsplib.h"
+	#include "dspwind.h"
 
-/* Tipo di curva parametrica da utilizzare */
-typedef enum { SLPProportional, SLPBilinear } SLPPrefilteringType;
+	/* Tipo di curva parametrica da utilizzare */
+	typedef enum { SLPProportional, SLPBilinear } SLPPrefilteringType;
 
-void FastLowPassFir(DLReal * Filter,const unsigned int Order,const DLReal Freq, DLReal * Window,const unsigned int WSize);
-
-/* Prefiltratura a bande tramite sliding lowpass di un segnale */
-void SLPreFilt(DLReal * InImp, const int IBS, const int FBS,
-	       const int FilterLen, const int BandSplit, const DLReal WindowExponent, 
-	       const int SampleFreq, const DLReal StartFreq, const DLReal EndFreq, 
-	       int WindowGap, DLReal FSharpness, DLReal * OutImp, 
-	       const WindowType WType, const SLPPrefilteringType SLPType);
+	/* Prefiltratura a bande tramite sliding lowpass di un segnale */
+	void SLPreFilt(DLReal * InImp, const int IBS, const int FBS,
+		const int FilterLen, const int BandSplit, const DLReal WindowExponent, 
+		const int SampleFreq, const DLReal StartFreq, const DLReal EndFreq, 
+		int WindowGap, DLReal FSharpness, DLReal * OutImp, 
+		const WindowType WType, const SLPPrefilteringType SLPType);
 #endif

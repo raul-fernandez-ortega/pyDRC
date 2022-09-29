@@ -3,7 +3,17 @@
 
 STLvectorComplex STL_Fftw(STLvectorReal Sig)
 {
-  int I,SigLen = Sig.size();
+  DLComplex *OutSig = new DLComplex[Sig.size()];
+  if( Fftw(Sig.data(), OutSig, Sig.size()) == true) {
+    STLvectorComplex RetSig(OutSig, OutSig + Sig.size());
+    delete OutSig;
+    return RetSig;
+  } else {
+    STLvectorComplex RetSig;
+    delete OutSig;
+    return RetSig;
+  }
+  /*int I,SigLen = Sig.size();
   DLReal *InSig = new DLReal[SigLen];
   DLComplex *OutSig = new DLComplex[SigLen];
   STLvectorComplex RetSig(Sig.size());
@@ -15,12 +25,22 @@ STLvectorComplex STL_Fftw(STLvectorReal Sig)
   }
   delete InSig;
   delete OutSig;
-  return RetSig;
+  return RetSig;*/
 }
 
 STLvectorReal STL_IFftw(STLvectorComplex Sig)
 {
-  int I,SigLen = Sig.size();
+  DLReal *OutSig = new DLReal[Sig.size()];
+  if( IFftw(Sig.data(), OutSig, Sig.size()) == true) {
+    STLvectorReal RetSig(OutSig, OutSig + Sig.size());
+    delete OutSig;
+    return RetSig;
+  } else {
+    STLvectorReal RetSig;
+    delete OutSig;
+    return RetSig;
+  }
+  /*int I,SigLen = Sig.size();
   DLComplex *InSig = new DLComplex[SigLen];
   DLReal *OutSig = new DLReal[SigLen];
   STLvectorReal RetSig(Sig.size());
@@ -33,7 +53,7 @@ STLvectorReal STL_IFftw(STLvectorComplex Sig)
   delete InSig;
   delete OutSig;
 
-  return RetSig;
+  return RetSig; */
 }
 
 

@@ -161,17 +161,21 @@ bool GenericFir(DLReal * Filter,unsigned int Order,DLReal * F,
   DLReal * LF;
   DLReal * LM;
   DLReal * LP;
-  
+
   if ((Order < 2) || (Np < 2))
     return(false);
   
-  if ((F[0] != 0) || (F[Np-1] != 1))
+  if ((F[0] != 0) || (F[Np-1] != 1)) {
+    printf("First Frequency must be 0 and last frequency must be 1\n");
+    fflush(stdout);
     return(false);
-  
+  }
   for(I = 0;I < Np-1;I++)
-    if (F[I] > F[I+1])
+    if (F[I] > F[I+1]) {
+      printf("Frequency points must be in increasing order\n");
+      fflush(stdout);
       return(false);
-  
+    }
   if (Is == 0)
     for (HtSize = 2;HtSize < Order;HtSize <<= 1);
   else
@@ -364,7 +368,6 @@ bool GenericFir(DLReal * Filter,unsigned int Order,DLReal * F,
     delete(LF);
     break;
   }
-  
   if (Order%2 == 0) {
     for(I = 1;I < HtSize;I++)
       Ht[HtSize2-I] = -std::conj(Ht[I]);

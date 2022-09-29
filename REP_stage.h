@@ -29,15 +29,13 @@ class RMPstage
   DRCSignal *InSig;
   DRCSignal *MPSignal;
   DRCSignal *EPSignal; 
+  void process(void);
 
  public:
   RMPstage(DRCSignal *InputSig, RMPParmsType InCfg);
   void NewInputSignal(DRCSignal *InputSig);
   void NewInCfg(RMPParmsType InCfg);
   ~RMPstage() {};
-  void process(void);
-  void Normalize(void);
-  void WriteOutput(void);
   RMPParmsType getRMPParms(void) { return Cfg; };
   DRCSignal *getMPSig() { return MPSignal; };
   DRCSignal *getEPSig() { return EPSignal; };

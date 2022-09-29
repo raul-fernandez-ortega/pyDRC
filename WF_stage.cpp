@@ -3,18 +3,20 @@
 WFstage::WFstage(DRCSignal *InputSig, WFParmsType InCfg)
 {
   InSig = InputSig;
-  OutSig = new DRCSignal(InputSig);
+  OutSig = new DRCSignal(*InputSig);
   Cfg = InCfg;
-}
+  //process();
 
+}
 void WFstage::NewInputSignal(DRCSignal *InputSig)
 {
   InSig = InputSig;
-  OutSig->setParams(InputSig);
+  //process();
 }
 void WFstage::NewInCfg(WFParmsType InCfg)
 {
   Cfg = InCfg;
+  //process();
 }
 void WFstage::process(void)
 {
@@ -23,7 +25,7 @@ void WFstage::process(void)
   
   unsigned int I;
 
-  STLvectorReal *BufSig = new STLvectorReal();
+  STLvectorReal BufSig;
 
   SLPPrefilteringType SLPType;
   BWPPrefilteringType BWPType;
@@ -40,8 +42,8 @@ void WFstage::process(void)
       OutSig->setWStart((InSig->getWLen() - Cfg.WFLowerWindow) / 2);
   else
       OutSig->setWStart((InWinLen - Cfg.WFLowerWindow) / 2);
-  for(I = OutSig->getWStart(); I <  InSig->Data->size(); I++)
-    BufSig->push_back(InSig->getData()->at(I));
+  for(I = OutSig->getWStart(); I <  InSig->Data.size(); I++)
+    BufSig.push_back(InSig->Data[I]);
 
   if (Cfg.WFfilterFctn[0] == 'P')
     {
@@ -62,17 +64,12 @@ void WFstage::process(void)
       if (((Cfg.WFPreWindowLen == 0) && (OutSig->getWStart() < OutSig->getPSStart())) 
 	  || ((OutSig->getWStart() + Cfg.WFLowerWindow) > OutSig->getPSEnd()))
       	sputs("!!Warning: input signal too short for correct signal filtering, spurios spikes may be generated.");
-      
+
       OutSig->setData(STL_BWPreFilt(BufSig,Cfg.WFLowerWindow,Cfg.WFUpperWindow,
 				    Cfg.WFFilterLen,Cfg.WFBandSplit,Cfg.WFWindowExponent,
 				    InSig->getSampleRate(),Cfg.WFStartFreq,Cfg.WFEndFreq,
-				    Cfg.WFWindowGap,WFull,BWPType));
-
-      /*OutSig->setData(STL_BWPreFilt(BufSig,Cfg.WFLowerWindow,Cfg.WFUpperWindow,
-				    Cfg.WFFilterLen,Cfg.WFBandSplit,Cfg.WFWindowExponent,
-				    InSig->getSampleRate(),Cfg.WFStartFreq,Cfg.WFEndFreq,
 				    Cfg.WFWindowGap,WFull,BWPType),
-				    0, Cfg.WFLowerWindow + Cfg.WFFilterLen - 1);*/
+		      0, Cfg.WFLowerWindow + Cfg.WFFilterLen - 1);
       break;
       
     case 'b':
@@ -80,16 +77,12 @@ void WFstage::process(void)
       /* Verifica che la finestratura sia corretta */
       if ((OutSig->getWStart() + Cfg.WFLowerWindow) > OutSig->getPSEnd())
       	sputs("!!Warning: input signal too short for correct signal filtering, spurios spikes may be generated.");
-
+      
       OutSig->setData(STL_BWPreFilt(BufSig,Cfg.WFLowerWindow,Cfg.WFUpperWindow,
 				    Cfg.WFFilterLen,Cfg.WFBandSplit,Cfg.WFWindowExponent,
 				    InSig->getSampleRate(),Cfg.WFStartFreq,Cfg.WFEndFreq,
-				    Cfg.WFWindowGap,WRight,BWPType));
-      /*OutSig->setData(STL_BWPreFilt(BufSig,Cfg.WFLowerWindow,Cfg.WFUpperWindow,
-				    Cfg.WFFilterLen,Cfg.WFBandSplit,Cfg.WFWindowExponent,
-				    InSig->getSampleRate(),Cfg.WFStartFreq,Cfg.WFEndFreq,
 				    Cfg.WFWindowGap,WRight,BWPType),
-				    0, Cfg.WFLowerWindow + Cfg.WFFilterLen - 1);*/
+		      0, Cfg.WFLowerWindow + Cfg.WFFilterLen - 1);
       break;
       
     case 'S':
@@ -99,16 +92,12 @@ void WFstage::process(void)
       if (((OutSig->getPreWindowLen() == 0) && (OutSig->getWStart() < OutSig->getPSStart()))
 	  || ((OutSig->getWStart() + Cfg.WFLowerWindow) > OutSig->getPSEnd()))
 	sputs("!!Warning: input signal too short for correct signal filtering, spurios spikes may be generated.");
-
+      
       OutSig->setData(STL_SLPreFilt(BufSig,Cfg.WFLowerWindow,Cfg.WFUpperWindow,
 				    Cfg.WFFilterLen,Cfg.WFBandSplit,Cfg.WFWindowExponent,
 				    InSig->getSampleRate(),Cfg.WFStartFreq,Cfg.WFEndFreq,
-				    Cfg.WFWindowGap,Cfg.WFFSharpness,WFull,SLPType));
-      /*OutSig->setData(STL_SLPreFilt(BufSig,Cfg.WFLowerWindow,Cfg.WFUpperWindow,
-				    Cfg.WFFilterLen,Cfg.WFBandSplit,Cfg.WFWindowExponent,
-				    InSig->getSampleRate(),Cfg.WFStartFreq,Cfg.WFEndFreq,
 				    Cfg.WFWindowGap,Cfg.WFFSharpness,WFull,SLPType),
-				    0, Cfg.WFLowerWindow + Cfg.WFFilterLen - 1);*/
+		      0, Cfg.WFLowerWindow + Cfg.WFFilterLen - 1);
       break;
       
     case 's':
@@ -120,12 +109,8 @@ void WFstage::process(void)
       OutSig->setData(STL_SLPreFilt(BufSig,Cfg.WFLowerWindow,Cfg.WFUpperWindow,
 				    Cfg.WFFilterLen,Cfg.WFBandSplit,Cfg.WFWindowExponent,
 				    InSig->getSampleRate(),Cfg.WFStartFreq,Cfg.WFEndFreq,
-				    Cfg.WFWindowGap,Cfg.WFFSharpness,WRight,SLPType));
-      /*OutSig->setData(STL_SLPreFilt(BufSig,Cfg.WFLowerWindow,Cfg.WFUpperWindow,
-				    Cfg.WFFilterLen,Cfg.WFBandSplit,Cfg.WFWindowExponent,
-				    InSig->getSampleRate(),Cfg.WFStartFreq,Cfg.WFEndFreq,
 				    Cfg.WFWindowGap,Cfg.WFFSharpness,WRight,SLPType),
-				    0, Cfg.WFLowerWindow + Cfg.WFFilterLen - 1);*/
+		      0, Cfg.WFLowerWindow + Cfg.WFFilterLen - 1);
       break;
     }
   /* Calcola la dimensione per la finestratura finale */
@@ -143,28 +128,8 @@ void WFstage::process(void)
   if (Cfg.WFRTFlag[0] == 'Y')
     {
       sputs("Ringing truncation final windowing.");
-      STL_BlackmanWindow(OutSig->getData(), OutSig->getWStart(),OutSig->getWLen());
+      STL_BlackmanWindow(OutSig->Data, OutSig->getWStart(),OutSig->getWLen());
     }
   OutSig->Normalize(Cfg.WFNormFactor, Cfg.WFNormType);
   OutSig->WriteSignal(Cfg.WFOutFile, Cfg.WFOutFileType);
 }
-
-void WFstage::Normalize(void)
-{
-  if (Cfg.WFNormFactor > 0) {
-    sputs("WF stage signal normalization.");
-    OutSig->Normalize(Cfg.WFNormFactor, Cfg.WFNormType);
-  }
-}
-
-void WFstage::WriteOutput(void)
-{
-   if (Cfg.WFOutFile != NULL) {
-     sputs("Saving WF stage signal.");
-     if (OutSig->WriteSignal(Cfg.WFOutFile, Cfg.WFOutFileType)== false) {
-       sputs("Test convolution save failed.");
-       return;
-     }
-   }
-}
-

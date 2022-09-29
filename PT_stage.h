@@ -45,8 +45,6 @@ class PTstage
   void NewInCfg(PTParmsType InCfg);
   ~PTstage() {};
   int process(void);
-  void Normalize(void);
-  void WriteOutput(void);
   PTParmsType getPTParms(void) { return Cfg; };
   DRCSignal *getOutSig() { return OutSig; };
 };

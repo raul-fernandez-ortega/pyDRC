@@ -31,8 +31,6 @@ class MSstage
   void NewInCfg(MSParmsType InCfg);
   ~MSstage() {};
   void process(void);
-  void Normalize(void);
-  void WriteOutput(void);
   MSParmsType getCfgParms(void) { return Cfg; };
   DRCSignal *getOutSig() { return OutSig; };
 };

@@ -40,8 +40,6 @@ class TCstage
   void NewInCfg(TCParmsType InCfg);
   ~TCstage();
   void process(void);
-  void Normalize(void);
-  void WriteOutput(void);
   TCParmsType getCfgParms(void) { return Cfg; };
   DRCSignal *getOutSig() { return OutSig; };
 };

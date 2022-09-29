@@ -116,6 +116,97 @@ import_array();
     $result = PyArray_Return(temp_array);
 }
 
+%typemap(in) STLvectorReal &{
+    if(PyList_Check($input))
+    {
+	$1 = new STLvectorReal(PyList_Size($input));
+        for (int cii=0; cii<PyList_Size($input); cii++)
+        {
+            if(PyInt_Check(PyList_GetItem($input,cii)))
+                $1->at(cii) = (DLReal)PyInt_AsLong(PyList_GetItem($input,cii));
+            else if(!PyFloat_Check(PyList_GetItem($input,cii))) 
+            {
+                PyErr_SetString(PyExc_TypeError, "Expecting Python floating point object as list elements.");
+                return NULL;
+            }
+	    else
+                $1->at(cii) = PyFloat_AsDouble(PyList_GetItem($input,cii)) ;
+        }
+    }
+    else if(PyArray_Check($input))
+    {
+	PyArrayObject *temp_array;
+        PyArg_Parse($input,(char*)"O",&temp_array);
+	$1 = new STLvectorReal(PyArray_DIM(temp_array,0));
+        for (int cii=0; cii<PyArray_DIM(temp_array,0); cii++)
+	  $1->at(cii) = *(double *)(PyArray_DATA(temp_array) + cii*PyArray_STRIDE(temp_array,0));
+    }
+    else
+    {
+        PyErr_SetString(PyExc_TypeError, "Expecting Numarray or Python list point object.");
+        return NULL;
+    }
+}
+
+%typemap(argout) STLvectorReal &ARef {
+    PyArrayObject* temp_array;	
+    double *  pointer;
+    npy_intp dims[1];
+    dims[0] = $1->size();
+    temp_array = (PyArrayObject*)PyArray_SimpleNew(1,dims,NPY_DOUBLE);
+    pointer = (double*)PyArray_DATA(temp_array);
+    for (unsigned int cii=0; cii<$1->size();cii++)
+	    *pointer++ = $1->at(cii);
+    $result = PyArray_Return(temp_array);
+}
+
+%typemap(argout) (STLvectorReal& FilterFreq, STLvectorReal& FilterM, STLvectorReal& FilterP) {
+
+    PyArrayObject* freq_array, *mag_array, *ph_array;
+    double*  pointer;	
+    npy_intp dims1[1], dims2[1], dims3[1];
+    
+    dims1[0] = $1->size();
+    dims2[0] = $2->size();
+    dims3[0] = $3->size();
+
+    freq_array = (PyArrayObject*)PyArray_SimpleNew(1,dims1,NPY_DOUBLE);
+    mag_array = (PyArrayObject*)PyArray_SimpleNew(1,dims2,NPY_DOUBLE);
+    ph_array = (PyArrayObject*)PyArray_SimpleNew(1,dims3,NPY_DOUBLE);;
+
+    pointer = (double*)PyArray_DATA(freq_array);
+    for (unsigned int cii=0; cii<$1->size();cii++)
+	 *pointer++ = $1->at(cii);
+
+    pointer = (double*)PyArray_DATA(mag_array);;
+    for (unsigned int cii=0; cii<$2->size();cii++)
+	 *pointer++ = $2->at(cii);
+
+    pointer = (double*)PyArray_DATA(ph_array);;
+    for (unsigned int cii=0; cii<$3->size();cii++)
+	*pointer++ = $3->at(cii);
+
+    $result = PyList_New(0);
+    PyList_Append($result,(PyObject*)freq_array);
+    PyList_Append($result,(PyObject*)mag_array);
+    PyList_Append($result,(PyObject*)ph_array);
+}
+
+
+// Passing out a STL vector of DLReal (double) as reference
+%typemap(argout) STLvectorReal &Sig {
+    PyArrayObject* temp_array;	
+    double*  pointer;
+    npy_intp dims[1];
+
+    dims[0] = $1->size();
+    temp_array = (PyArrayObject*)PyArray_SimpleNew(1,dims,NPY_DOUBLE);
+    pointer = (double*)PyArray_DATA(temp_array);
+    for (unsigned int cii=0; cii<$1->size();cii++)
+	*pointer++ = $1->at(cii);
+    $result = PyArray_Return(temp_array);
+}
+
 %typemap(argout) (STLvectorReal& FilterFreq, STLvectorReal& FilterM, STLvectorReal& FilterP) {
 
     PyArrayObject* freq_array, *mag_array, *ph_array;

@@ -4,9 +4,11 @@ ISstage::ISstage(DRCSignal *MPInputSig, DRCSignal *EPInputSig, ISParmsType InCfg
 {
   MPInSig = MPInputSig;
   EPInSig = EPInputSig;
-  PCOutSig = new DRCSignal(MPInputSig);
-  ISOutSig = new DRCSignal(MPInputSig);
+  PCOutSig = new DRCSignal(*MPInputSig);
+  ISOutSig = new DRCSignal(*MPInputSig);
   Cfg = InCfg;
+  //process();
+
 }
 
 ISstage::~ISstage()
@@ -17,8 +19,10 @@ void ISstage::NewInputSignal(DRCSignal *MPInputSig, DRCSignal *EPInputSig)
 {
   MPInSig = MPInputSig;
   EPInSig = EPInputSig;
-  PCOutSig->setParams(MPInputSig);
-  ISOutSig->setParams(MPInputSig);
+  delete PCOutSig;
+  delete ISOutSig;
+  PCOutSig = new DRCSignal(*MPInputSig);
+  ISOutSig = new DRCSignal(*MPInputSig);
 }
 
 void ISstage::NewInCfg(ISParmsType InCfg)
@@ -39,15 +43,15 @@ void ISstage::process(void)
   PCOutSig->clearData();
   ISOutSig->clearData();
 
-  MPDataSize = MPInSig->getData()->size();
-  EPDataSize = EPInSig->getData()->size();
+  MPDataSize = MPInSig->getData().size();
+  EPDataSize = EPInSig->getData().size();
   MPPFSig = new DLReal[MPDataSize];
   EPPFSig = new DLReal[EPDataSize];  
 
   for(I = 0; I < MPDataSize; I++)
-    MPPFSig[I]=MPInSig->getData()->at(I);
+    MPPFSig[I]=MPInSig->Data[I];
   for(I = 0; I < EPDataSize; I++)
-    EPPFSig[I]=EPInSig->getData()->at(I);
+    EPPFSig[I]=EPInSig->Data[I];
 
   /* Controlla se si deve attuare la fase PC */
   //  if (Cfg.ISType[0] == 'L' || Cfg.PCOutFile != NULL)
@@ -89,7 +93,7 @@ void ISstage::process(void)
     SigNormalize(&MPEPSig[PCOutSig->getWStart()],PCOutSig->getWLen(),Cfg.PCNormFactor, (NormType) Cfg.PCNormType[0]);
   }
   for(int K = 0; K < PCOutSig->getWStart() + PCOutSig->getWLen(); K++)
-    PCOutSig->Data->push_back(MPEPSig[K]);
+    PCOutSig->Data.push_back(MPEPSig[K]);
   
   PCOutSig->WriteSignal(Cfg.PCOutFile, Cfg.PCOutFileType);
 
@@ -195,24 +199,8 @@ void ISstage::process(void)
     ISOutSig->setWStart(0);
   }
   for(int K = ISOutSig->getWStart(); K < ISOutSig->getWLen(); K++)
-    ISOutSig->Data->push_back(ISRevOut[K]);
+    ISOutSig->Data.push_back(ISRevOut[K]);
   
-  //Normalize();
-  //WriteOutput();
-}
-
-void ISstage::Normalize(void)
-{
-  if (Cfg.ISNormFactor > 0) {
-    sputs("IS stage impulse normalization.");
-    ISOutSig->Normalize(Cfg.ISNormFactor,Cfg.ISNormType);
-  }
-}
-
-void ISstage::WriteOutput(void)
-{
-  if (Cfg.ISOutFile != NULL) {
-    sputs("Saving IS stage impulse.");
-    ISOutSig->WriteSignal(Cfg.ISOutFile, Cfg.ISOutFileType);
-  }
+  ISOutSig->Normalize(Cfg.ISNormFactor, Cfg.ISNormType);
+  ISOutSig->WriteSignal(Cfg.ISOutFile, Cfg.ISOutFileType);
 }
