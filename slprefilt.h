@@ -36,6 +36,7 @@
 	/* Inclusioni */
 	#include "dsplib.h"
 	#include "dspwind.h"
+        #include "baselib_stl.h"
 
 	/* Tipo di curva parametrica da utilizzare */
 	typedef enum { SLPProportional, SLPBilinear } SLPPrefilteringType;

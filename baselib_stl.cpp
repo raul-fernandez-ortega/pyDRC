@@ -150,6 +150,52 @@ bool SND_WriteSignal(const char * FName,const STLvectorReal Src,const unsigned i
   return true;
 }
 
+bool SND_WriteSignal(const char * FName,const DLReal *Src,const unsigned int WStart, 
+		     const unsigned int WLen, const int SampleRate, const IFileType FType)
+
+{
+  SNDFILE* sf_file;
+  SF_INFO sf_info;
+  int short_mask;
+  unsigned int I, J;
+  
+  DLReal *Dst = new DLReal[WLen];
+  for(J = 0,I = WStart; J < WLen; I++, J++)
+    Dst[J] = Src[I];
+  
+  sf_info.samplerate = SampleRate;
+  sf_info.channels = 1;
+  sf_info.frames = 0;
+  sf_info.sections = 0;
+  sf_info.seekable = 0;
+
+  switch (FType) 
+    {
+    case PcmFloat64Bit:
+      short_mask = SF_FORMAT_DOUBLE | SF_ENDIAN_FILE;
+      break;
+      
+    case PcmFloat32Bit:
+      short_mask = SF_FORMAT_FLOAT | SF_ENDIAN_FILE;
+      break;
+      
+    case PcmInt16Bit:
+      short_mask = SF_FORMAT_PCM_16 | SF_ENDIAN_FILE;
+      break;
+    }
+  sf_info.format = SF_FORMAT_WAV | short_mask;
+  
+  if((sf_file = sf_open(FName, SFM_WRITE, &sf_info)) == NULL) {
+    fprintf(stderr, "cannot open sndfile \"%s\" for output (%s)\n",FName, sf_strerror(sf_file));
+    return false;
+  }
+  
+  sf_writef_double(sf_file, Dst, WLen);
+  sf_close(sf_file);
+  return true;
+}
+
+
 bool STL_OverwriteSignal(const char * FName,const STLvectorReal Src,const int Skip, 
 			 const IFileType FType)
 {
@@ -353,9 +399,9 @@ bool GlSweep(DLReal Rate, DLReal Amplitude, DLReal HzStart, DLReal HzEnd, DLReal
   printf("\nSweep length: %d samples\n",SweepLen);
   printf("Silence length: %d samples\n",SilenceLen);
   printf("Total sweep length: %d samples\n",2 * SilenceLen + SweepLen);
-  printf("Total sweep file size: %u bytes\n",sizeof(float) * (2 * SilenceLen + SweepLen));
+  printf("Total sweep file size: %lu bytes\n",sizeof(float) * (2 * SilenceLen + SweepLen));
   printf("Total inverse length: %d samples\n",SweepLen);
-  printf("Total inverse file size: %u bytes\n\n",sizeof(float) * SweepLen);
+  printf("Total inverse file size: %lu bytes\n\n",sizeof(float) * SweepLen);
   fflush(stdout);
   
   /* Generates the sweep file */

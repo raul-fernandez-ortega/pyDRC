@@ -325,6 +325,11 @@ void SLPreFilt(DLReal * InImp, const int IBS, const int FBS,
   DLReal B;
   int HFBS;
   int HIBS;
+
+#ifdef DEBUG
+  int iFilter=0;
+  char FilterFileName[25];
+#endif
   
   /* Sommatoria filtratura */
   DLReal Sum;
@@ -561,6 +566,13 @@ void SLPreFilt(DLReal * InImp, const int IBS, const int FBS,
     sputs("R - Initial lowpass convolution...");
     
     /* Ciclo di convoluzione lowpass iniziale */
+#ifdef DEBUG
+    iFilter++;
+    sprintf(FilterFileName,"FIRFilter_%02d.wav",iFilter);
+    if (SND_WriteSignal(FilterFileName,FIRFilter,0,CFL, SampleFreq,PcmFloat32Bit) == true) {
+      printf("FIR Filter %i saved to %s.Frequency=%7.1f Hz\n",iFilter,FilterFileName,(double) FilterBegin*SampleFreq/2);
+    }
+#endif
     for(I = 0,CWL = HNR,OCP = NR - 1;I < (HNR - HIBS);I++,CWL--,OCP--) {
       /* Calcola la finestratura effettiva corrente */
       EWL = (int) floor(FSharpness * CWL);
@@ -602,6 +614,7 @@ void SLPreFilt(DLReal * InImp, const int IBS, const int FBS,
     Band = 0;
     
     /* Ciclo di convoluzione sliding lowpass */
+
     for(I = HNR - HIBS,CWL = HIBS,OCP = NR - 1 - (HNR - HIBS);I < (HNR - HFBS);I++,CWL--,OCP--) {
       /* Calcola la finestratura effettiva corrente */
       EWL = (int) floor(FSharpness * CWL);
@@ -635,10 +648,19 @@ void SLPreFilt(DLReal * InImp, const int IBS, const int FBS,
       } else
 	/* Ricalcola il filtro usando la finestra corrente */
 	FastLowPassFir(FIRFilter,CFL,BCut,FWin,CFL);
-      
+#ifdef DEBUG
+      printf("Output sample=%d .FIR Filter Frequency=%7.1f Hz. Length=%d samples\n",OCP,(double)BCut*SampleFreq/2,CFL);
+#endif
       /* Verifica visualizzazione stato prefiltratura */
       if (BCut >= (DLReal) (FilterBegin * pow(BWidth,Band))) {
 	/* Segnala lo stato */
+#ifdef DEBUG
+	iFilter++;
+	sprintf(FilterFileName,"FIRFilter_%02d.wav",iFilter);
+	if (SND_WriteSignal(FilterFileName,FIRFilter,0,CFL, SampleFreq,PcmFloat32Bit) == true) {
+	  printf("FIR Filter %i saved to %s.Frequency=%7.1f Hz\n",iFilter,FilterFileName,(double) BCut*SampleFreq/2);
+	}
+#endif
 	printf("R - Band: %3d, %7.1f Hz, width: %6d, FIR, ", (int) Band, (double) (BCut * SampleFreq) / 2, CWL);
 	
 	/* Passa alla banda successiva */
@@ -660,7 +682,9 @@ void SLPreFilt(DLReal * InImp, const int IBS, const int FBS,
 	IS = OCP - (CHFL + HEFL);
 	FS = 0;
       }
-      
+#ifdef DEBUG
+      printf("Input data convolution from %i to %i\n",IS,IS+CFLM);
+#endif
       /* Esegue la convoluzione */
       Sum = 0;
       for (J = FS,EI = IS;J < CFLM;J++,EI++)
@@ -682,7 +706,6 @@ void SLPreFilt(DLReal * InImp, const int IBS, const int FBS,
       BCut = (DLReal) FilterBegin + (B * (((HIBS - CWL) / A) * (1 + Q)) / (1 + ((HIBS - CWL) / A) * Q));
       break;
     }
-    
     /* Segnala lo stato finale */
     printf("F - Band: %3d, %7.1f Hz, width: %6d, FIR, ", (int) Band, (double) (BCut * SampleFreq) / 2, CWL);
     sputs("completed.");
@@ -703,7 +726,7 @@ void SLPreFilt(DLReal * InImp, const int IBS, const int FBS,
     for (I = 0;I < HEFL;I++)
       OutImp[I] = (DLReal) 0.0;
     FS = HFBS + (IBS % 2);
-    for (I = HEFL,J = 0;I < (HNR + FS);I++,J++)
+    for (I = HEFL,J = 0;I < (HNR + FS);I++,J++) 
       OutImp[I] = InImp[J];
     break;
   case WFull:

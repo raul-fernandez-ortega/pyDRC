@@ -25,6 +25,9 @@ bool STL_WriteSignal(const char * FName,const STLvectorReal Src,
 bool SND_WriteSignal(const char * FName,const STLvectorReal Src,const unsigned int WStart,
 		     const unsigned int WLen, const int SampleRate, const IFileType FType);
 
+bool SND_WriteSignal(const char *FName,const DLReal *Src,const unsigned int WStart,
+		     const unsigned int WLen, const int SampleRate, const IFileType FType);
+
 /* Sovrascrive il segnale indicato su disco */
 bool STL_OverwriteSignal(const char * FName,const STLvectorReal Src,const int Skip, 
 			 const IFileType FType);
