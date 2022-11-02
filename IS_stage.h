@@ -45,9 +45,11 @@ class ISstage
   void NewInputSignal(DRCSignal *MPInputSig, DRCSignal *EPInputSig);
   void NewInCfg(ISParmsType InCfg);
   ~ISstage();
-  void process(void);
+  bool process(void);
   ISParmsType getCfgParms(void) { return Cfg; };
   DRCSignal *getPCOutSig() { return PCOutSig; };
   DRCSignal *getISOutSig() { return ISOutSig; };
+  void Normalize(void);
+  void WriteOutput(void);
 };
 #endif

@@ -26,17 +26,17 @@ class HDstage
   DRCSignal *InSignal;
   DRCSignal *MPSignal;
   DRCSignal *EPSignal;
-  void Normalize(void);
-  void WriteOutput(void);
 
  public:
   HDstage(DRCSignal *InputSig, HDParmsType InCfg);
   ~HDstage() {};
   void NewInputSignal(DRCSignal *InputSig);
   void NewInCfg(HDParmsType InCfg);
-  void process(void);
+  bool process(void);
   HDParmsType getHDParms(void) { return Cfg; };
   DRCSignal *getMPSig(void) { return MPSignal; };
   DRCSignal *getEPSig(void) { return EPSignal; };
+  void Normalize(void);
+  void WriteOutput(void);
 };
 #endif

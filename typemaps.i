@@ -160,6 +160,46 @@ import_array();
     $result = PyArray_Return(temp_array);
 }
 
+%typemap(argout) (STLvectorReal& MPOut, STLvectorReal& EPOut) {
+
+    PyArrayObject* mp_array, *ep_array;
+    double*  pointer;	
+    npy_intp dims1[1], dims2[1];
+    
+    dims1[0] = $1->size();
+    dims2[0] = $2->size();
+
+    mp_array = (PyArrayObject*)PyArray_SimpleNew(1,dims1,NPY_DOUBLE);
+    ep_array = (PyArrayObject*)PyArray_SimpleNew(1,dims2,NPY_DOUBLE);
+
+    pointer = (double*)PyArray_DATA(mp_array);
+    for (unsigned int cii=0; cii<$1->size();cii++)
+	 *pointer++ = $1->at(cii);
+
+    pointer = (double*)PyArray_DATA(ep_array);;
+    for (unsigned int cii=0; cii<$2->size();cii++)
+	 *pointer++ = $2->at(cii);
+
+    $result = PyList_New(0);
+    PyList_Append($result,(PyObject*)mp_array);
+    PyList_Append($result,(PyObject*)ep_array);
+}
+
+
+// Passing out a STL vector of DLReal (double) as reference
+%typemap(argout) STLvectorReal &Sig {
+    PyArrayObject* temp_array;	
+    double*  pointer;
+    npy_intp dims[1];
+
+    dims[0] = $1->size();
+    temp_array = (PyArrayObject*)PyArray_SimpleNew(1,dims,NPY_DOUBLE);
+    pointer = (double*)PyArray_DATA(temp_array);
+    for (unsigned int cii=0; cii<$1->size();cii++)
+	*pointer++ = $1->at(cii);
+    $result = PyArray_Return(temp_array);
+}
+
 %typemap(argout) (STLvectorReal& FilterFreq, STLvectorReal& FilterM, STLvectorReal& FilterP) {
 
     PyArrayObject* freq_array, *mag_array, *ph_array;
@@ -342,7 +382,6 @@ import_array();
 %typemap(in) IFileType {
   Py_ssize_t size = PyUnicode_GetLength($input);
   char* ifile_type = (char*)PyUnicode_AsUTF8AndSize($input, &size);
-  printf("ifile_type:%s\n",ifile_type);
   fflush(stdout);
   switch(ifile_type[0]) {
   case 'I':

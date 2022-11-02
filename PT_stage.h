@@ -44,8 +44,10 @@ class PTstage
   void NewInputSignal(DRCSignal* InputSig, DRCSignal* RefSignal);
   void NewInCfg(PTParmsType InCfg);
   ~PTstage() {};
-  int process(void);
+  bool process(void);
   PTParmsType getPTParms(void) { return Cfg; };
   DRCSignal *getOutSig() { return OutSig; };
+  void Normalize(void);
+  void WriteOutput(void);
 };
 #endif

@@ -30,10 +30,11 @@ class PLstage
   void NewInputSignal(DRCSignal *InputSig);
   void NewInCfg(PLParmsType InCfg);
   ~PLstage() {};
-  void process(void);
+  bool process(void);
   PLParmsType getPLParms(void) { return Cfg; };
   DRCSignal *getOutSig() { return OutSig; };
-  
+  void Normalize(void);
+  void WriteOutput(void);
   
 };
 #endif

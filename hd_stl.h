@@ -6,24 +6,7 @@
 #include "baseclass.h"
 using namespace std;
 
-class HD
-{
-  public:
-  int MExp;
-  unsigned int hd_len;
-  unsigned int hd_start;
-  DRCSignal *InSig;
-  DRCSignal *MPSig;
-  DRCSignal *EPSig;  
-  HD(DRCSignal *InputSig, unsigned int start, unsigned int len, int InMExp);
-  ~HD() {};
-  void SetInputSignal(DRCSignal *InputSig, unsigned int start, unsigned int len);
-  void SetMExp(int InMExp);
-  void process(void);
-  DRCSignal *getInSig() { return InSig; };
-  DRCSignal *getMPSig() { return MPSig; };
-  DRCSignal *getEPSig() { return EPSig; };
-
-};
+bool STL_CepstrumHD(const STLvectorReal In, STLvectorReal& MPOut, STLvectorReal& EPOut, const int N, const int MExp);
+bool STL_HilbertHD(const STLvectorReal In, STLvectorReal& MPOut, STLvectorReal& EPOut, const int N, const int MExp);
 
 #endif

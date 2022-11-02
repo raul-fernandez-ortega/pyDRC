@@ -1,62 +1,40 @@
 #include "hd_stl.h"
 
-HD::HD(DRCSignal *InputSig, unsigned int start, unsigned int len, int InMExp )
+bool STL_CepstrumHD(const STLvectorReal In, STLvectorReal& MPOut, STLvectorReal& EPOut, const int N, const int MExp)
 {
-  InSig = InputSig;
-  hd_start = start;
-  hd_len = len;
-  MExp = InMExp;
-  MPSig = new DRCSignal();
-  MPSig->setParams(*InputSig);
-  EPSig = new DRCSignal();
-  EPSig->setParams(*InputSig);
-}
-void HD::SetInputSignal(DRCSignal *InputSig, unsigned int start, unsigned int len)
-{
-  delete InSig;
-  delete MPSig;
-  delete EPSig;
-  InSig = InputSig;
-  hd_start = start;
-  hd_len = len;
-  MPSig = new DRCSignal();
-  MPSig->setParams(*InputSig);
-  EPSig = new DRCSignal();
-  EPSig->setParams(*InputSig);
-}
-void HD::SetMExp(int InMExp)
-{
-  MExp = InMExp;
-}
-void HD::process(void)
-{
-  STLvectorReal MPdata, EPdata;
-  unsigned int I, J;
-  unsigned int SigLen = InSig->Data.size();
-  //MPSig->setData(MPSig->Data.clear());
-  //EPSig->setData(EPSig->Data.clear());
-  DLReal *hd_InSig = new DLReal[SigLen];
-  DLReal *hd_MPSig = new DLReal[hd_len];
-  DLReal *hd_EPSig = new DLReal[hd_len];
-  for(I = 0; I < hd_start; I++) {
-    hd_MPSig[I] = 0;
-    hd_EPSig[I] = 0;
-  }
-  for(J =0, I = hd_start; J < hd_len; J++, I++) {
-    hd_InSig[J] = InSig->Data[I];
-    hd_MPSig[I] = 0;
-    hd_EPSig[I] = 0;
-  }
-  for(I = hd_len; I < SigLen; I++) {
-    hd_MPSig[I] = 0;
-    hd_EPSig[I] = 0;
-  }
-  if (CepstrumHD(hd_InSig, hd_MPSig, hd_EPSig, hd_len, MExp) == true) {
+  unsigned int I;
+  unsigned int SigLen = In.size();
+  DLReal *hd_MPSig = new DLReal[SigLen];
+  DLReal *hd_EPSig = new DLReal[SigLen];
+  
+  if (CepstrumHD(In.data(), hd_MPSig, hd_EPSig, SigLen, MExp) == true) {
+    MPOut.clear();
+    EPOut.clear();
     for(I = 0; I < SigLen; I++) {
-      MPdata.push_back(hd_MPSig[I]);
-      EPdata.push_back(hd_EPSig[I]);
+      MPOut.push_back(hd_MPSig[I]);
+      EPOut.push_back(hd_EPSig[I]);
     }
-    MPSig->setData(MPdata,0,MPdata.size());
-    EPSig->setData(EPdata,0,EPdata.size());
+    return true;
+  } else {
+    return false;
+  }
+}
+bool STL_HilbertHD(const STLvectorReal In, STLvectorReal& MPOut, STLvectorReal& EPOut, const int N, const int MExp)
+{
+  unsigned int I;
+  unsigned int SigLen = In.size();
+  DLReal *hd_MPSig = new DLReal[SigLen];
+  DLReal *hd_EPSig = new DLReal[SigLen];
+  
+  if (HilbertHD(In.data(), hd_MPSig, hd_EPSig, SigLen, MExp) == true) {
+    MPOut.clear();
+    EPOut.clear();
+    for(I = 0; I < SigLen; I++) {
+      MPOut.push_back(hd_MPSig[I]);
+      EPOut.push_back(hd_EPSig[I]);
+    }
+    return true;
+  } else {
+    return false;
   }
 }

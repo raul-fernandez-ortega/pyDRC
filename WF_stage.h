@@ -18,10 +18,10 @@ typedef struct
   int      WFFilterLen;
   DLReal   WFFSharpness;
   int      WFBandSplit;
-  DLReal   WFNormFactor;
-  char *   WFNormType;
-  char *   WFOutFile;
-  char *   WFOutFileType;
+  DLReal   NormFactor;
+  char *   NormType;
+  char *   OutFile;
+  char *   OutFileType;
   int      WFPreWindowLen;
   int      WFFinalWindow;
   char *   WFRTFlag;
@@ -39,9 +39,11 @@ class WFstage
   void NewInputSignal(DRCSignal* InputSig);
   void NewInCfg(WFParmsType InCfg);
   ~WFstage() {};
-  void process(void);
+  bool process(void);
   WFParmsType getWFParms(void) { return Cfg; };
   DRCSignal *getOutSig() { return OutSig; };
+  void Normalize(void);
+  void WriteOutput(void);
   
   
 };

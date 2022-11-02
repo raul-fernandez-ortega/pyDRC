@@ -36,9 +36,11 @@ class HRstage
   void NewInputSignal(DRCSignal *MPInputSig, DRCSignal *EPInputSignal);
   void NewInCfg(HRParmsType InCfg);
   ~HRstage() {};
-  void process(void);
+  bool process(void);
   HRParmsType getCfgParms(void) { return Cfg; };
   DRCSignal *getMPSig() { return MPSignal; };
   DRCSignal *getEPSig() { return EPSignal; };
+  void Normalize(void);
+  void WriteOutput(void);
 };
 #endif

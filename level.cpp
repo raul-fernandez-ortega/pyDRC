@@ -43,15 +43,26 @@ DLReal GetRMSLevel(const DLReal * Sig,const int SigLen)
   DLReal RMS;
   int I;
   
-  RMS = (DLReal) 0.0;
-  for (I = 0; I < SigLen; I++)
-    RMS += Sig[I] * Sig[I];
+  /* Variabili di supporto per il Kahan summation algorithm */
+  DLReal KC;
+  DLReal KY;
+  DLReal KT;
   
+  /* Calcolo RMS */
+  RMS = (DLReal) 0.0;
+  KC = (DLReal) 0.0;
+  for (I = 0; I < SigLen; I++) {
+    KY = (Sig[I] * Sig[I]) - KC;
+    KT = RMS + KY;
+    KC = (KT - RMS) - KY;
+    RMS = KT;
+  }
+  /* Ritorna il valore normalizzato */
   return (DLReal) sqrt(RMS);
 }
 
 /* Calola il valore RMS del segnale Sig sulla banda di frequenze indicate */
-DLReal GetBLRMSLevel(const DLReal * Sig,const int SigLen,const int SampleFreq, const DLReal StartFreq, const DLReal EndFreq,const int MExp)
+DLReal GetBLRMSLevel(const DLReal * Sig,const int SigLen,const int SampleFreq, const DLReal StartFreq, const DLReal EndFreq, const DLReal W,const int MExp)
 {
   DLReal RMS;
   int I;
@@ -73,7 +84,7 @@ DLReal GetBLRMSLevel(const DLReal * Sig,const int SigLen,const int SampleFreq, c
     return false;
   FFTArray = new DLComplex[FFTSize];
   if (FFTArray == NULL) {
-    delete InArray;
+    delete[] InArray;
     return false;
   }
     /* Copia il segnale nell'array */
@@ -86,80 +97,191 @@ DLReal GetBLRMSLevel(const DLReal * Sig,const int SigLen,const int SampleFreq, c
     Fftw(InArray, FFTArray, FFTSize);
 
     /* Calcola il valore RMS sulla banda interessata */
-    RMS = GetBLFFTRMSLevel(FFTArray,FFTSize,SampleFreq,StartFreq,EndFreq);
+    RMS = GetBLFFTRMSLevel(FFTArray,FFTSize,SampleFreq,StartFreq,EndFreq, W);
     
     /* Dealloca l'array FFT */
-    delete FFTArray;
-    delete InArray;
+    delete[] FFTArray;
+    delete[] InArray;
 
     /* Ritorna il valore RMS */
     return RMS;
 }
 
-/* Calola il valore RMS del segnale trasformato FFTArray sulla banda di frequenze indicate */
-DLReal GetBLFFTRMSLevel(const DLComplex * FFTArray,const int FFTSize,const int SampleFreq, const DLReal StartFreq, const DLReal EndFreq)
+/* Euler Mascheroni constant */
+#define RMSEMC (0.57721566490153286060651209008240243104215933593992)
+
+/* Limite calcolo diretto */
+#define RMSHNL (256)
+
+/* Calola il valore RMS del segnale trasformato FFTArray sulla banda di frequenze
+   indicate con pesatura in frequenza pari a 1/(f^w). Per W = 0 calcola il normale
+   valore RMS, per W = 1 assegna peso uguale in potenza per ottava/decade. */
+DLReal GetBLFFTRMSLevel(const DLComplex * FFTArray,const int FFTSize,const int SampleFreq, const DLReal StartFreq, const DLReal EndFreq, const DLReal W)
 {
   DLReal RMS;
   int I;
   int FS;
   int FE;
+  int HS;
   
-  /* Determina gli indici per il calcolo del valore RMS */
-  FS = (int) floor(((FFTSize * StartFreq) / SampleFreq));
-  FE = (int) floor(((FFTSize * EndFreq) / SampleFreq));
+  /* Fattore di compensazione per pesatura */
+  DLReal CF;
   
-  /* Calcola il livello RMS */
-  if (FS > 0)
-    RMS = (DLReal) 0.0;
-  else {
-    RMS = std::real(FFTArray[0]) * std::real(FFTArray[0]);
-    FS = 1;
-  }
-  for (I = FS;I < FE;I++)
-    RMS += std::norm(FFTArray[I]);
-  
-  return (DLReal) sqrt(2.0 * RMS / FFTSize);
-}
+  /* Variabili di supporto per il Kahan summation algorithm
+     nel calcolo del fattore di compensazione */
+  DLReal KC;
+  DLReal KY;
+  DLReal KT;
 
+  /* Determina gli indici per il calcolo del valore RMS */
+  FS = (int) floor(0.5 + ((FFTSize * StartFreq) / SampleFreq));
+  FE = (int) floor(0.5 + ((FFTSize * EndFreq) / SampleFreq));
+  HS = FFTSize / 2;
+
+  /* Calcola il livello RMS */
+  if (W == ((DLReal) 0.0)) {
+    /* Valore iniziale */
+    if (FS > 0)
+      RMS = (DLReal) 0.0;
+    else {
+      RMS = std::real(FFTArray[0]) * std::real(FFTArray[0]);
+      FS = 1;
+    }
+    
+    /* Calcolo RMS */
+    KC = (DLReal) 0.0;
+    for (I = FS;I < FE;I++) {
+      KY = std::norm(FFTArray[I]) - KC;
+      KT = RMS + KY;
+      KC = (KT - RMS) - KY;
+      RMS = KT;
+    }
+    
+    return (DLReal) sqrt(2.0 * RMS / FFTSize);
+  } else {
+    /* Valore iniziale */
+    if (FS > 0) {
+      /* Nessuna componente DC */
+      CF = (DLReal) 0.0;
+      RMS = (DLReal) 0.0;
+    } else {
+      /* Assume che la componente DC abbia lo stesso peso della prima
+	 componente utile */
+      CF = (DLReal) 1.0;
+      RMS = CF * std::real(FFTArray[0]) * std::real(FFTArray[0]);
+      FS = 1;
+    }
+    
+    /* Calcolo RMS */
+    KC = ((DLReal) 0.0);
+    for (I = FS;I < FE;I++) {
+      KY = (std::norm(FFTArray[I]) * ((DLReal) pow(I,-W))) - KC;
+      KT = RMS + KY;
+      KC = (KT - RMS) - KY;
+      RMS = KT;
+    }
+
+    /* Calcola il fattore di normalizzazione, pari al numero armonico */
+    if (HS < RMSHNL) {
+      /* Error > 1e-16, harmonic number direct computation */
+      KC = ((DLReal) 0.0);
+      for (I = HS; I > 0; I--) {
+	KY = ((DLReal) pow(I,-W)) - KC;
+	KT = CF + KY;
+	KC = (KT - CF) - KY;
+	CF = KT;
+      }
+    } else {
+	/* Error < 1e-16, harmonic number approximation */
+	CF += (DLReal) (RMSEMC + log(HS) + 1.0 / (2 * HS) - 1.0 / (12.0 * HS * HS) + 1.0 / (120.0 * pow(HS,4.0)));
+      }
+    return (DLReal) sqrt(RMS / CF);
+  }
+}
 
 /* Effettua la normalizzazione del segnale al valore indicato e
 secondo il metodo indicato */
-void SigNormalize(DLReal * Sig,const int SigLen,const DLReal NormFactor, const NormType TNorm)
+bool SigNormalize(DLReal * Sig,const int SigLen,const DLReal NormFactor, const NormType TNorm)
 {
   DLReal NormBase;
   int I;
+  DLComplex * PFA;
+  DLReal * IFA;
+  DLReal CAV;
   
   switch (TNorm) {
   case NormEuclidean:
-    NormBase = GetRMSLevel(Sig,SigLen);
-    if (NormBase > (DLReal) 0.0)
+    {
+      NormBase = GetRMSLevel(Sig,SigLen);
+      
+      if (NormBase <= (DLReal) 0.0)
+	return false;
+      
       for (I = 0; I < SigLen; I++)
 	Sig[I] = (Sig[I] * NormFactor) / NormBase;
+    }
     break;
     
   case NormMax:
-    NormBase = (DLReal) 0.0;
-    for (I = 0; I < SigLen; I++)
-      if (((DLReal) fabs(Sig[I])) > NormBase)
-	NormBase = (DLReal) fabs(Sig[I]);
-    for (I = 0; I < SigLen; I++)
-      Sig[I] = (Sig[I] * NormFactor) / NormBase;
+    {
+      NormBase = (DLReal) 0.0;
+      for (I = 0; I < SigLen; I++)
+	if (((DLReal) fabs(Sig[I])) > NormBase)
+	  NormBase = (DLReal) fabs(Sig[I]);
+      if (NormBase <= (DLReal) 0.0)
+	return false;
+      for (I = 0; I < SigLen; I++)
+	Sig[I] = (Sig[I] * NormFactor) / NormBase;
+    }
     break;
     
   case NormSum:
-    NormBase = (DLReal) 0.0;
-    for (I = 0; I < SigLen; I++)
-      NormBase += (DLReal) fabs(Sig[I]);
+    {
+      NormBase = (DLReal) 0.0;
+      for (I = 0; I < SigLen; I++)
+	NormBase += (DLReal) fabs(Sig[I]);
+      
+      if (NormBase <= (DLReal) 0.0)
+	return false;
+      
+      for (I = 0; I < SigLen; I++)
+	Sig[I] = (Sig[I] * NormFactor) / NormBase;
+    }
+    break;
     
-    for (I = 0; I < SigLen; I++)
-      Sig[I] = (Sig[I] * NormFactor) / NormBase;
+  case NormFFTPeak:
+    {
+      if ((IFA = new DLReal[SigLen]) == NULL)
+	return false;
+      if ((PFA = new DLComplex[SigLen]) == NULL)
+	return false;
+      for (I = 0; I < SigLen; I++)
+	IFA[I] = Sig[I];
+      Fftw(IFA, PFA, SigLen);
+      NormBase = (DLReal) 0.0;
+      for (I = 0; I < SigLen / 2; I++) {
+	CAV = std::abs<DLReal>(PFA[I]);
+	if (CAV > NormBase)
+	  NormBase = CAV;
+      }
+      if (NormBase <= (DLReal) 0.0) {
+	delete[] PFA;
+	return false;
+      }
+      for (I = 0; I < SigLen; I++)
+	Sig[I] = (Sig[I] * NormFactor) / NormBase;
+      delete[] PFA;
+    }
     break;
   }
+  
+  /* Operazione completata */
+  return true;
 }
 
 /* Limitazione valli a fase lineare con calcolo del valore RMS sull banda indicata */
 bool LPDipLimit(DLReal * Sig,const int SigLen,const DLReal MinGain,const DLReal DLStart,
-		const int SampleFreq, const DLReal StartFreq, const DLReal EndFreq, const int MExp)
+		const int SampleFreq, const DLReal StartFreq, const DLReal EndFreq, const DLReal W, const int MExp)
 {
   int FFTSize;
   int I;
@@ -188,7 +310,7 @@ bool LPDipLimit(DLReal * Sig,const int SigLen,const DLReal MinGain,const DLReal 
     return false;
   FFTArray = new DLComplex[FFTSize];
   if (FFTArray == NULL) {
-    delete InArray;
+    delete[] InArray;
     return false;
   }
   
@@ -202,8 +324,14 @@ bool LPDipLimit(DLReal * Sig,const int SigLen,const DLReal MinGain,const DLReal 
   Fftw(InArray, FFTArray, FFTSize);
 
   /* Determina il livello RMS del segnale */
-  RMSLevel = MinGain * GetBLFFTRMSLevel(FFTArray,FFTSize,SampleFreq,StartFreq,EndFreq);
+  //RMSLevel = MinGain * GetBLFFTRMSLevel(FFTArray,FFTSize,SampleFreq,StartFreq,EndFreq);
+
+  /* Determina il livello RMS del segnale */
+  RMSLevel = GetBLFFTRMSLevel(FFTArray,FFTSize,SampleFreq,StartFreq,EndFreq,W);
+  /* Calcola il livello minimo tenendo conto delle limitazioni di banda */
   
+  RMSLevel = (DLReal) (RMSLevel * MinGain / sqrt(2.0 * (EndFreq - StartFreq) / SampleFreq));
+
   /* Verifica il tipo di limitazione impostata */
   if (DLStart >= (DLReal) 1.0) {
     /* Scansione per troncatura guadagno */
@@ -242,8 +370,7 @@ bool LPDipLimit(DLReal * Sig,const int SigLen,const DLReal MinGain,const DLReal 
 	
 	/* Riassegna il guadagno del filtro */
 	DLLevel = (DLSLevel - DLAbs) / DLMFactor;
-	FFTArray[I] = std::polar<DLReal>(DLSLevel - DLGFactor * DLLevel,
-					 std::arg<DLReal>(FFTArray[I]));
+	FFTArray[I] = std::polar<DLReal>(DLSLevel - DLGFactor * DLLevel, std::arg<DLReal>(FFTArray[I]));
       } else
 	DLMin = (DLReal) -1.0;
     }
@@ -257,8 +384,8 @@ bool LPDipLimit(DLReal * Sig,const int SigLen,const DLReal MinGain,const DLReal 
     Sig[I] = InArray[I];
   
   /* Dealloca l'array */
-  delete FFTArray;
-  delete InArray;
+  delete[] FFTArray;
+  delete[] InArray;
 
   /* Operazione completata */
   return true;
@@ -267,7 +394,7 @@ bool LPDipLimit(DLReal * Sig,const int SigLen,const DLReal MinGain,const DLReal 
 /* Limitazione valli a fase lineare con calcolo del valore RMS sulla banda indicata */
 /* Versione con mantenimento continuità della derivata prima nei punti di limitazione */
 bool C1LPDipLimit(DLReal * Sig,const int SigLen,const DLReal MinGain,const DLReal DLStart,
-		  const int SampleFreq, const DLReal StartFreq, const DLReal EndFreq, const int MExp)
+		  const int SampleFreq, const DLReal StartFreq, const DLReal EndFreq, const DLReal W, const int MExp)
 {
   int FFTSize;
   int I;
@@ -278,6 +405,7 @@ bool C1LPDipLimit(DLReal * Sig,const int SigLen,const DLReal MinGain,const DLRea
   DLReal DLLevel;
   DLReal DLGFactor;
   DLReal DLAbs;
+  bool tick;
   
   /* Determina la prima potenza di 2 >= SigLen */
   if (MExp >= 0) {
@@ -288,13 +416,12 @@ bool C1LPDipLimit(DLReal * Sig,const int SigLen,const DLReal MinGain,const DLRea
     FFTSize = SigLen;
   
   /* Alloca l'array per l'fft */
-  /* Alloca l'array per l'fft */
   InArray = new DLReal[FFTSize];
   if (InArray == NULL)
     return false;
   FFTArray = new DLComplex[FFTSize];
   if (FFTArray == NULL) {
-    delete InArray;
+    delete[] InArray;
     return false;
   }
 
@@ -308,15 +435,30 @@ bool C1LPDipLimit(DLReal * Sig,const int SigLen,const DLReal MinGain,const DLRea
   Fftw(InArray, FFTArray, FFTSize);
 
   /* Determina il livello RMS del segnale */
-  RMSLevel = MinGain * GetBLFFTRMSLevel(FFTArray,FFTSize,SampleFreq,StartFreq,EndFreq);
+  //RMSLevel = MinGain * GetBLFFTRMSLevel(FFTArray,FFTSize,SampleFreq,StartFreq,EndFreq);
+
+  /* Determina il livello RMS del segnale */
+  RMSLevel = GetBLFFTRMSLevel(FFTArray,FFTSize,SampleFreq,StartFreq,EndFreq,W);
   
+  /* Calcola il livello minimo tenendo conto delle limitazioni di banda */
+  RMSLevel = (DLReal) (RMSLevel * MinGain / sqrt(2.0 * (EndFreq - StartFreq) / SampleFreq));
+
   /* Verifica il tipo di limitazione impostata */
   if (DLStart >= (DLReal) 1.0) {
+    tick = true;
     /* Scansione per troncatura guadagno */
     for (I = 0; I < FFTSize; I++) {
       DLAbs = std::abs(FFTArray[I]);
-      if (DLAbs < RMSLevel)
+      if (DLAbs < RMSLevel) {
+	if(tick && I < FFTSize/2) {
+	  printf("Dip limit found at %.2f Hz\n",(float)I*SampleFreq/FFTSize);
+	  tick = false;
+	}
 	FFTArray[I] = std::polar<DLReal>(RMSLevel,std::arg<DLReal>(FFTArray[I]));
+      } else if(!tick && I < FFTSize/2) {
+	printf("Dip limit finished at %.2f Hz\n",(float)I*SampleFreq/FFTSize);
+	tick = true;
+      }
     }
   } else {
     /* Determina i fattori per la limitazione guadagno */
@@ -324,13 +466,21 @@ bool C1LPDipLimit(DLReal * Sig,const int SigLen,const DLReal MinGain,const DLRea
     DLGFactor = DLSLevel - RMSLevel;
     
     /* Scansione per limitazione guadagno */
+    tick = true;
     for (I = 0; I < FFTSize; I++) {
       DLAbs = std::abs(FFTArray[I]);
       if (DLAbs < DLSLevel) {
+	if(tick && I < FFTSize/2) {
+	  printf("Dip limit found at %.2f Hz\n",(float)I*SampleFreq/FFTSize);
+	  tick = false;
+	}
 	/* Riassegna il guadagno del filtro */
 	DLLevel = (DLSLevel - DLAbs) / DLGFactor;
 	DLLevel = DLLevel / (((DLReal) 1.0) + DLLevel);
 	FFTArray[I] = std::polar<DLReal>(DLSLevel - DLGFactor * DLLevel, std::arg<DLReal>(FFTArray[I]));
+      }  else if(!tick && I < FFTSize/2) {
+	printf("Dip limit finished at %.2f Hz\n",(float)I*SampleFreq/FFTSize);
+	tick = true;
       }
     }
   }
@@ -343,8 +493,8 @@ bool C1LPDipLimit(DLReal * Sig,const int SigLen,const DLReal MinGain,const DLRea
     Sig[I] = InArray[I];
 
   /* Dealloca l'array */
-  delete FFTArray;
-  delete InArray;
+  delete[] FFTArray;
+  delete[] InArray;
 
   /* Operazione completata */
   return true;
@@ -353,7 +503,7 @@ bool C1LPDipLimit(DLReal * Sig,const int SigLen,const DLReal MinGain,const DLRea
 /* Limitazione valli a fase minima con calcolo del valore RMS sulla banda indicata */
 /* Versione basata sulla trasformata di Hilbert */
 bool HMPDipLimit(DLReal * Sig,const int SigLen,const DLReal MinGain,const DLReal DLStart,
-		 const int SampleFreq, const DLReal StartFreq, const DLReal EndFreq, const int MExp)
+		 const int SampleFreq, const DLReal StartFreq, const DLReal EndFreq, const DLReal W, const int MExp)
 {
   DLReal *InArray1;
   DLReal *InArray2;
@@ -404,7 +554,14 @@ bool HMPDipLimit(DLReal * Sig,const int SigLen,const DLReal MinGain,const DLReal
   Fftw(InArray1, FFTArray1, FS);
 
   /* Determina il livello RMS del segnale */
-  RMSLevel = MinGain * GetBLFFTRMSLevel(FFTArray1,FS,SampleFreq,StartFreq,EndFreq);
+  //RMSLevel = MinGain * GetBLFFTRMSLevel(FFTArray1,FS,SampleFreq,StartFreq,EndFreq);
+  
+  /* Determina il livello RMS del segnale */
+  RMSLevel = GetBLFFTRMSLevel(FFTArray1,FS,SampleFreq,StartFreq,EndFreq,W);
+  
+  /* Calcola il livello minimo tenendo conto delle limitazioni di banda */
+  RMSLevel = (DLReal) (RMSLevel * MinGain / sqrt(2.0 * (EndFreq - StartFreq) / SampleFreq));
+
   
   /* Verifica il tipo di limitazione impostata */
   if (DLStart >= (DLReal) 1.0) {
@@ -500,11 +657,11 @@ bool HMPDipLimit(DLReal * Sig,const int SigLen,const DLReal MinGain,const DLReal
     Sig[I] = InArray1[I];
 
   /* Dealloca gli array */
-  delete FFTArray1;
-  delete FFTArray2;
-  delete FFTArray3;
-  delete InArray1;
-  delete InArray2;
+  delete[] FFTArray1;
+  delete[] FFTArray2;
+  delete[] FFTArray3;
+  delete[] InArray1;
+  delete[] InArray2;
 
   /* Operazione completata */
   return true;
@@ -514,7 +671,7 @@ bool HMPDipLimit(DLReal * Sig,const int SigLen,const DLReal MinGain,const DLReal
 /* Versione basata sulla trasformata di Hilbert */
 /* Versione con mantenimento continuità della derivata prima nei punti di limitazione */
 bool C1HMPDipLimit(DLReal * Sig,const int SigLen,const DLReal MinGain,const DLReal DLStart,
-		   const int SampleFreq, const DLReal StartFreq, const DLReal EndFreq, const int MExp)
+		   const int SampleFreq, const DLReal StartFreq, const DLReal EndFreq, const DLReal W, const int MExp)
 {
   DLReal *InArray1;
   DLReal *InArray2;
@@ -529,6 +686,7 @@ bool C1HMPDipLimit(DLReal * Sig,const int SigLen,const DLReal MinGain,const DLRe
   DLReal DLGFactor;
   DLReal DLAbs;
   bool LogLimit;
+  bool tick;
   
   /* Controlla se si deve adottare un potenza di due */
   if (MExp >= 0) {
@@ -562,8 +720,14 @@ bool C1HMPDipLimit(DLReal * Sig,const int SigLen,const DLReal MinGain,const DLRe
   Fftw(InArray1, FFTArray1, FS);
 
   /* Determina il livello RMS del segnale */
-  RMSLevel = MinGain * GetBLFFTRMSLevel(FFTArray1,FS,SampleFreq,StartFreq,EndFreq);
-  
+  //RMSLevel = MinGain * GetBLFFTRMSLevel(FFTArray1,FS,SampleFreq,StartFreq,EndFreq);
+
+  /* Determina il livello RMS del segnale */
+  RMSLevel = GetBLFFTRMSLevel(FFTArray1,FS,SampleFreq,StartFreq,EndFreq,W);
+
+  /* Calcola il livello minimo tenendo conto delle limitazioni di banda */
+  RMSLevel = (DLReal) (RMSLevel * MinGain / sqrt(2.0 * (EndFreq - StartFreq) / SampleFreq));
+
   /* Verifica il tipo di limitazione impostata */
   if (DLStart >= (DLReal) 1.0) {
     /* Scansione per troncatura guadagno */
@@ -593,9 +757,14 @@ bool C1HMPDipLimit(DLReal * Sig,const int SigLen,const DLReal MinGain,const DLRe
     
     /* Scansione per limitazione guadagno */
     LogLimit = false;
+    tick = true;
     for (I = 0; I < FS; I++) {
       DLAbs = std::abs(FFTArray1[I]);
       if (DLAbs < DLSLevel) {
+	if(tick && I < FS/2) {
+	    printf("Dip limit found at %.2f Hz\n",(float)I*SampleFreq/FS);
+	    tick = false;
+	  }
 	/* Riassegna il guadagno del filtro */
 	DLLevel = (DLSLevel - DLAbs) / DLGFactor;
 	DLLevel = DLLevel / (((DLReal) 1.0) + DLLevel);
@@ -609,6 +778,10 @@ bool C1HMPDipLimit(DLReal * Sig,const int SigLen,const DLReal MinGain,const DLRe
 	  FFTArray2[I] = std::log<DLReal>(FFTArray3[I]);
 	}
       } else {
+	if(!tick && I < FS/2) {
+	    printf("Dip limit finished at %.2f Hz\n",(float)I*SampleFreq/FS);
+	    tick = true;
+	  }
 	FFTArray3[I] = (DLReal) 1.0;
 	FFTArray2[I] = (DLReal) 0.0;
       }
@@ -639,11 +812,11 @@ bool C1HMPDipLimit(DLReal * Sig,const int SigLen,const DLReal MinGain,const DLRe
     Sig[I] = InArray1[I];
 
   /* Dealloca gli array */
-  delete FFTArray1;
-  delete FFTArray2;
-  delete FFTArray3;
-  delete InArray1;
-  delete InArray2;
+  delete[] FFTArray1;
+  delete[] FFTArray2;
+  delete[] FFTArray3;
+  delete[] InArray1;
+  delete[] InArray2;
 
   /* Operazione completata */
   return true;
@@ -651,7 +824,7 @@ bool C1HMPDipLimit(DLReal * Sig,const int SigLen,const DLReal MinGain,const DLRe
 
 /* Limitazione picchi a fase lineare con calcolo del valore RMS sull banda indicata */
 bool LPPeakLimit(DLReal * Sig,const int SigLen,const DLReal MaxGain,const DLReal PLStart,
-		 const int SampleFreq, const DLReal StartFreq, const DLReal EndFreq, const int MExp)
+		 const int SampleFreq, const DLReal StartFreq, const DLReal EndFreq, const DLReal W, const int MExp)
 {
   int FFTSize;
   int I;
@@ -692,7 +865,14 @@ bool LPPeakLimit(DLReal * Sig,const int SigLen,const DLReal MaxGain,const DLReal
   Fftw(InArray, FFTArray, FFTSize);
 
   /* Determina il livello RMS del segnale */
-  RMSLevel = MaxGain * GetBLFFTRMSLevel(FFTArray,FFTSize,SampleFreq,StartFreq,EndFreq);
+  //RMSLevel = MaxGain * GetBLFFTRMSLevel(FFTArray,FFTSize,SampleFreq,StartFreq,EndFreq);
+
+  /* Determina il livello RMS del segnale */
+  RMSLevel = GetBLFFTRMSLevel(FFTArray,FFTSize,SampleFreq,StartFreq,EndFreq,W);
+
+  /* Calcola il livello massimo tenendo conto delle limitazioni di banda */
+  RMSLevel = (DLReal) (RMSLevel * MaxGain / sqrt(2.0 * (EndFreq - StartFreq) / SampleFreq));
+
   
   /* Verifica il tipo di limitazione impostata */
   if (PLStart >= (DLReal) 1.0) {
@@ -746,8 +926,8 @@ bool LPPeakLimit(DLReal * Sig,const int SigLen,const DLReal MaxGain,const DLReal
     Sig[I] = InArray[I];
 
   /* Dealloca l'array */
-  delete FFTArray;
-  delete InArray;
+  delete[] FFTArray;
+  delete[] InArray;
   
   /* Operazione completata */
   return true;
@@ -756,7 +936,7 @@ bool LPPeakLimit(DLReal * Sig,const int SigLen,const DLReal MaxGain,const DLReal
 /* Limitazione picchi a fase lineare con calcolo del valore RMS sull banda indicata */
 /* Versione con mantenimento continuità della derivata prima nei punti di limitazione */
 bool C1LPPeakLimit(DLReal * Sig,const int SigLen,const DLReal MaxGain,const DLReal PLStart,
-		   const int SampleFreq, const DLReal StartFreq, const DLReal EndFreq, const int MExp)
+		   const int SampleFreq, const DLReal StartFreq, const DLReal EndFreq, const DLReal W, const int MExp)
 {
   int FFTSize;
   int I;
@@ -794,7 +974,14 @@ bool C1LPPeakLimit(DLReal * Sig,const int SigLen,const DLReal MaxGain,const DLRe
   Fftw(InArray, FFTArray, FFTSize);
   
   /* Determina il livello RMS del segnale */
-  RMSLevel = MaxGain * GetBLFFTRMSLevel(FFTArray,FFTSize,SampleFreq,StartFreq,EndFreq);
+  //RMSLevel = MaxGain * GetBLFFTRMSLevel(FFTArray,FFTSize,SampleFreq,StartFreq,EndFreq);
+  
+  /* Determina il livello RMS del segnale */
+  RMSLevel = GetBLFFTRMSLevel(FFTArray,FFTSize,SampleFreq,StartFreq,EndFreq,W);
+
+  /* Calcola il livello massimo tenendo conto delle limitazioni di banda */
+  RMSLevel = (DLReal) (RMSLevel * MaxGain / sqrt(2.0 * (EndFreq - StartFreq) / SampleFreq));
+
   
   /* Verifica il tipo di limitazione impostata */
   if (PLStart >= (DLReal) 1.0) {
@@ -829,8 +1016,8 @@ bool C1LPPeakLimit(DLReal * Sig,const int SigLen,const DLReal MaxGain,const DLRe
     Sig[I] = InArray[I];
   
   /* Dealloca l'array */
-  delete FFTArray;
-  delete InArray;
+  delete[] FFTArray;
+  delete[] InArray;
   
   /* Operazione completata */
   return true;
@@ -839,7 +1026,7 @@ bool C1LPPeakLimit(DLReal * Sig,const int SigLen,const DLReal MaxGain,const DLRe
 /* Limitazione picchi a fase minima con calcolo del valore RMS sull banda indicata */
 /* Versione basata sulla trasformata di Hilbert */
 bool HMPPeakLimit(DLReal * Sig,const int SigLen,const DLReal MaxGain,const DLReal PLStart,
-		  const int SampleFreq, const DLReal StartFreq, const DLReal EndFreq, const int MExp)
+		  const int SampleFreq, const DLReal StartFreq, const DLReal EndFreq, const DLReal W, const int MExp)
 {
   DLReal *InArray1;
   DLReal *InArray2;
@@ -890,8 +1077,14 @@ bool HMPPeakLimit(DLReal * Sig,const int SigLen,const DLReal MaxGain,const DLRea
   Fftw(InArray1, FFTArray1, FS);
 
   /* Determina il livello RMS del segnale */
-  RMSLevel = MaxGain  * GetBLFFTRMSLevel(FFTArray1,FS,SampleFreq,StartFreq,EndFreq);
-  
+  //RMSLevel = MaxGain  * GetBLFFTRMSLevel(FFTArray1,FS,SampleFreq,StartFreq,EndFreq);
+
+  /* Determina il livello RMS del segnale */
+  RMSLevel = GetBLFFTRMSLevel(FFTArray1,FS,SampleFreq,StartFreq,EndFreq,W);
+
+  /* Calcola il livello massimo tenendo conto delle limitazioni di banda */
+  RMSLevel = (DLReal) (RMSLevel * MaxGain / sqrt(2.0 * (EndFreq - StartFreq) / SampleFreq));
+
   /* Verifica il tipo di limitazione impostata */
   if (PLStart >= (DLReal) 1.0) {
     /* Scansione per troncamento guadagno */
@@ -986,11 +1179,11 @@ bool HMPPeakLimit(DLReal * Sig,const int SigLen,const DLReal MaxGain,const DLRea
     Sig[I] = InArray1[I];
 
   /* Dealloca gli array */
-  delete FFTArray1;
-  delete FFTArray2;
-  delete FFTArray3;
-  delete InArray1;
-  delete InArray2;
+  delete[] FFTArray1;
+  delete[] FFTArray2;
+  delete[] FFTArray3;
+  delete[] InArray1;
+  delete[] InArray2;
 
   /* Operazione completata */
   return true;
@@ -1000,7 +1193,7 @@ bool HMPPeakLimit(DLReal * Sig,const int SigLen,const DLReal MaxGain,const DLRea
 /* Versione basata sulla trasformata di Hilbert */
 /* Versione con mantenimento continuità della derivata prima nei punti di limitazione */
 bool C1HMPPeakLimit(DLReal * Sig,const int SigLen,const DLReal MaxGain,const DLReal PLStart,
-		    const int SampleFreq, const DLReal StartFreq, const DLReal EndFreq, const int MExp)
+		    const int SampleFreq, const DLReal StartFreq, const DLReal EndFreq, const DLReal W, const int MExp)
 {
   DLReal *InArray1;
   DLReal *InArray2;
@@ -1048,8 +1241,14 @@ bool C1HMPPeakLimit(DLReal * Sig,const int SigLen,const DLReal MaxGain,const DLR
   Fftw(InArray1, FFTArray1, FS);
 
   /* Determina il livello RMS del segnale */
-  RMSLevel = MaxGain  * GetBLFFTRMSLevel(FFTArray1,FS,SampleFreq,StartFreq,EndFreq);
+  //RMSLevel = MaxGain  * GetBLFFTRMSLevel(FFTArray1,FS,SampleFreq,StartFreq,EndFreq);
+
+  /* Determina il livello RMS del segnale */
+  RMSLevel = GetBLFFTRMSLevel(FFTArray1,FS,SampleFreq,StartFreq,EndFreq,W);
   
+  /* Calcola il livello massimo tenendo conto delle limitazioni di banda */
+  RMSLevel = (DLReal) (RMSLevel * MaxGain / sqrt(2.0 * (EndFreq - StartFreq) / SampleFreq));
+
   /* Verifica il tipo di limitazione impostata */
   if (PLStart >= (DLReal) 1.0) {
     /* Scansione per troncamento guadagno */
@@ -1125,11 +1324,11 @@ bool C1HMPPeakLimit(DLReal * Sig,const int SigLen,const DLReal MaxGain,const DLR
     Sig[I] = InArray1[I];
   
   /* Dealloca gli array */
-  delete FFTArray1;
-  delete FFTArray2;
-  delete FFTArray3;
-  delete InArray1;
-  delete InArray2;
+  delete[] FFTArray1;
+  delete[] FFTArray2;
+  delete[] FFTArray3;
+  delete[] InArray1;
+  delete[] InArray2;
 
   /* Operazione completata */
   return true;
@@ -1182,8 +1381,8 @@ bool LPNormFlat(DLReal * Sig,const int SigLen,const DLReal Gain,const DLReal OGa
     Sig[I] = InArray[I];
 
   /* Dealloca l'array */
-  delete FFTArray;
-  delete InArray;
+  delete[] FFTArray;
+  delete[] InArray;
 
   /* Operazione completata */
   return true;
@@ -1269,10 +1468,10 @@ bool CMPNormFlat(DLReal * Sig,const int SigLen,const DLReal Gain,const DLReal OG
     Sig[I] = InArray1[I];
 
   /* Dealloca gli array */
-  delete FFTArray1;
-  delete FFTArray2;
-  delete InArray1;
-  delete InArray2;
+  delete[] FFTArray1;
+  delete[] FFTArray2;
+  delete[] InArray1;
+  delete[] InArray2;
 
   /* Operazione completata */
   return true;
@@ -1360,11 +1559,11 @@ bool HMPNormFlat(DLReal * Sig,const int SigLen,const DLReal Gain,const DLReal OG
     Sig[I] = InArray1[I];
 
   /* Dealloca gli array */
-  delete FFTArray1;
-  delete FFTArray2;
-  delete FFTArray3;
-  delete InArray1;
-  delete InArray2;
+  delete[] FFTArray1;
+  delete[] FFTArray2;
+  delete[] FFTArray3;
+  delete[] InArray1;
+  delete[] InArray2;
 
   /* Operazione completata */
   return true;

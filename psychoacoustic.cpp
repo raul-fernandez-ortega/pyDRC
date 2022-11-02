@@ -120,19 +120,30 @@ static void SECumulativeSum(SEFloat * A,const int N,SEFloat * S)
 {
   SEFloat * CS;
   SEFloat CV;
+  SEFloat SC;
+  SEFloat SY;
+  SEFloat ST;
   int I;
   
   if (S == NULL)
     CS = A;
   else
     CS = S;
-  
+ 
+  /* Kahan summation algorithm */
   CV = (SEFloat) 0.0;
+  SC = (SEFloat) 0.0;
   for (I = 0;I < N;I ++) {
-    CV += A[I];
-    CS[I] = CV;
+    SY = A[I] - SC;
+    ST = CV + SY;
+    SC = (ST - CV) - SY;
+    CS[I] = CV = ST;
   }
 }
+
+/* Funzione per il calcolo dell'esponenziale nella procedura
+di estrazione dell'inviluppo spettrale */
+#define SEPow(x,y) powl(x,y)
 
 /* Calcola l'inviluppo spettrale del segnale S con approssimazione
 dei picchi PDS e risoluzione BW, espressa in frazioni di ottava.
@@ -147,6 +158,7 @@ bool SpectralEnvelope(const DLReal * S,const int N,const int FS,
   DLComplex *CSP;
   SEFloat *SP;
   SEFloat *TSP;
+  SEFloat NF;
   DLReal BWF;
   int I;
   int J;
@@ -181,18 +193,29 @@ bool SpectralEnvelope(const DLReal * S,const int N,const int FS,
   SP[0] = (SEFloat) 0.0;
   for (I = 0,J = 1;I < N;I++,J++)
     SP[J] = std::abs<DLReal>(CSP[I]);
+
+  /* Normalizza l'ampiezza */
+  NF = (SEFloat) 0.0;
+  for (I = 0;I < N + 1;I++) {
+    if (SP[I] > NF)
+      NF = SP[I];
+  }
+  if (NF > (SEFloat) 0.0) {
+    for (I = 0;I < N + 1;I++)
+      SP[I] /= NF;
+  }
   
   /* Dealloca l'array per l'estrazione dello spettro */
-  delete CSP;
+  delete[] CSP;
   
   /* Alloca gli per gli intervalli estrazione inviluppo */
   if ((BU = new int[N]) == NULL) {
-    delete SP;
+    delete[] SP;
     return false;
   }
   if ((BL = new int[N]) == NULL) {
-    delete BU;
-    delete SP;
+    delete[] BU;
+    delete[] SP;
     return false;
   }
   
@@ -251,10 +274,10 @@ bool SpectralEnvelope(const DLReal * S,const int N,const int FS,
   
   /* Alloca l'array di supporto per l'estrazione dell'inviluppo */
   if ((TSP = new SEFloat[N + 1]) == NULL) {
-    delete BU;
-    delete BL;
-    delete SP;
-    delete InArray;
+    delete[] BU;
+    delete[] BL;
+    delete[] SP;
+    delete[] InArray;
     return false;
   }
   
@@ -290,20 +313,80 @@ bool SpectralEnvelope(const DLReal * S,const int N,const int FS,
     SE[I] = (DLReal) (TSP[BU[I]] - TSP[BL[I]]) / (BU[I] - BL[I]);
   
   /* Dealloca gli array temporanei */
-  delete BL;
-  delete BU;
-  delete TSP;
-  delete SP;
-  delete InArray;
+  delete[] BL;
+  delete[] BU;
+  delete[] TSP;
+  delete[] SP;
+  delete[] InArray;
   
   /* Operazione completata */
   return true;
 }
 
+/* Calola il valore RMS dell'inviluppo spettrale sulla banda di frequenze indicate */
+static DLReal SEGetBLFFTRMSLevel(const DLReal * SEArray,const int SESize,const int SampleFreq, const DLReal StartFreq,const DLReal EndFreq)
+{
+  DLReal RMS;
+  int I;
+  int FS;
+  int FE;
+  
+  /* Determina gli indici per il calcolo del valore RMS */
+  FS = (int) floor(((2 * SESize * StartFreq) / SampleFreq));
+  FE = (int) floor(((2 * SESize * EndFreq) / SampleFreq));
+  
+  /* Calcola il livello RMS */
+  RMS = (DLReal) 0.0;
+  for (I = FS;I < FE;I++)
+    RMS += SEArray[I] * SEArray[I];
+  
+  return (DLReal) sqrt(RMS / SESize);
+}
+
+/* Limitazione valli per inviluppo spettrale con calcolo del valore RMS sull banda indicata */
+static void C1SEDipLimit(DLReal * SE,const int SESize,const DLReal MinGain,const DLReal DLStart, const int SampleFreq,const DLReal StartFreq,const DLReal EndFreq)
+{
+  int I;
+  DLReal RMSLevel;
+  DLReal DLSLevel;
+  DLReal DLLevel;
+  DLReal DLGFactor;
+  DLReal DLAbs;
+  
+  /* Determina il livello RMS del segnale */
+  RMSLevel = MinGain * SEGetBLFFTRMSLevel(SE,SESize,SampleFreq,StartFreq,EndFreq);
+  
+  /* Verifica il tipo di limitazione impostata */
+  if (DLStart >= (DLReal) 1.0) {
+    /* Scansione per troncatura guadagno */
+    for (I = 0; I < SESize; I++) {
+      DLAbs = SE[I];
+      if (DLAbs < RMSLevel)
+	SE[I] = RMSLevel;
+    }
+  }
+  else {
+    /* Determina i fattori per la limitazione guadagno */
+    DLSLevel = RMSLevel / DLStart;
+    DLGFactor = DLSLevel - RMSLevel;
+    
+    /* Scansione per limitazione guadagno */
+    for (I = 0; I < SESize; I++) {
+      DLAbs = SE[I];
+      if (DLAbs < DLSLevel) {
+	/* Riassegna il guadagno del filtro */
+	DLLevel = (DLSLevel - DLAbs) / DLGFactor;
+	DLLevel = DLLevel / (((DLReal) 1.0) + DLLevel);
+	SE[I] = DLSLevel - DLGFactor * DLLevel;
+      }
+    }
+  }
+}
+
 /* Calcola un filtro target basato sull'inviluppo spettrale. Il filtro ha lunghezza pari a 2 volte la lunghezza del segnale in ingresso e non è
    finestrato */
-bool MKSETargetFilter(const DLReal * S,const int N,const int FS,
-		      const DLReal BW,const DLReal PDS,DLReal * TF,const MKSETFType TFType)
+bool MKSETargetFilter(const DLReal * S,const int N,const int FS, const DLReal BW,const DLReal PDS,DLReal * TF,const MKSETFType TFType,
+		      const DLReal MinGain,const DLReal DLStart,const int SampleFreq, const DLReal StartFreq,const DLReal EndFreq)
 {
   DLReal *InArray;
   DLComplex *CSE;
@@ -316,100 +399,110 @@ bool MKSETargetFilter(const DLReal * S,const int N,const int FS,
   if (SpectralEnvelope(S,N,FS,BW,PDS,TF) == false)
     return false;
   
+  /* Effettua la limitazione valli sull'inviluppo spettrale */
+  C1SEDipLimit(TF,N,MinGain,DLStart,SampleFreq,StartFreq,EndFreq);
+  
   /* Alloca l'array per il calcolo del filtro target */
-  if ((InArray = new DLReal[2 * N]) == NULL)
-    return false;
   if ((CSE = new DLComplex[2 * N]) == NULL)
     return false;
+
+  if ((InArray = new DLReal[2 * N]) == NULL)
+    return false;
+
+  for(I = 0; I < N; I++)
+    InArray[I] = TF[I];
   
   /* Verifica il tipo di filtro impostato */
-  switch (TFType)
-    {
-      /* Fase lineare */
-    case MKSETFLinearPhase:
-      /* Imposta la risposta in ampiezza */
-      for (I = 0,J = (2 * N) - 1;I < N;I++,J--)
-	CSE[J] = -(CSE[I] = ((DLReal) 1.0) / TF[I]);
-      for (I = 0;I < 2 * N;I++)
-	CSE[I] *= UnitRoot(I,4 * N);
-      
-      /* Calcola il filtro */
-      if (IFftw(CSE, InArray, 2 * N) == false)
-	{
-	  delete InArray;
-	  delete CSE;
-	  return false;
-	}
-      
-      /* Estrae il filtro a fase lineare */
-      for (I = 0,J = N;I < N;I++,J++)
-	{
-	  TF[I] = InArray[N - (I + 1)];
-	  TF[J] = InArray[I];
-	}
-      
-      /* Dealloca l'array per il calcolo filtro target */
-      delete CSE;
-      break;
-      
-      /* Fase minima */
-    case MKSETFMinimumPhase:
-      /* Calcola i valori per il cepstrum */
-      LogLimit = false;
-      for (I = 0,J = (2 * N) - 1;I < N;I++,J--) {
-	CV = ((DLReal) 1.0) / TF[I];
-	if (CV <= 0) {
-	  LogLimit = true;
-	  CSE[I] = CSE[J] = (DLReal) log(DRCMinFloat);
-	} else
-	  CSE[I] = CSE[J] = std::log<DLReal>(CV);
-      }
-      
-      /* Verifica se si è raggiunto il limite */
-      if (LogLimit == true)
-	sputs("Notice: log limit reached in cepstrum computation.");
-      
-      /* Calcola il cepstrum */
-      IFftw(CSE, InArray, 2 * N);
-      
-      /* Finestra il cepstrum */
-      for (I = 1; I < N;I++)
-	InArray[I] *= 2;
-      for (I = N + 1; I < 2 * N;I++)
-	InArray[I] = 0;
-      
-      /* Calcola la trsformata del cepstrum finestrato */
-      Fftw(InArray, CSE, 2 * N);
-      
-      /* Effettua il calcolo dell'esponenziale */
-      for (I = 0;I < 2 * N;I++)
-	CSE[I] = std::exp<DLReal>(CSE[I]);
-      
-      /* Determina la risposta del sistema a fase minima */
-      IFftw(CSE, InArray, 2 * N);
-      
-      /* Copia il risultato nell'array destinazione */
-      for (I = 0;I < 2 * N;I++)
-	TF[I] = InArray[I];
-      
-      /* Dealloca l'array per il calcolo filtro target */
-      delete CSE;
-      delete InArray;
-      break;
+  switch (TFType) {
+    /* Fase lineare */
+  case MKSETFLinearPhase:
+    /* Imposta la risposta in ampiezza */
+    for (I = 0,J = (2 * N) - 1;I < N;I++,J--)
+      CSE[J] = -(CSE[I] = ((DLReal) 1.0) / TF[I]);
+    for (I = 0;I < 2 * N;I++)
+      CSE[I] *= UnitRoot(I,4 * N);
+    
+    /* Calcola il filtro */
+    if (IFftw(CSE, InArray, 2 * N) == false) {
+      delete[] CSE;
+      delete[] InArray;
+      return false;
     }
+    
+    /* Estrae il filtro a fase lineare */
+    for (I = 0,J = N;I < N;I++,J++) {
+      TF[I] = InArray[N - (I + 1)];
+      TF[J] = InArray[I];
+      //TF[I] = std::real<DLReal>(CSE[N - (I + 1)]);
+      //TF[J] = std::real<DLReal>(CSE[I]);
+      }
+    
+    /* Dealloca l'array per il calcolo filtro target */
+    delete[] CSE;
+    delete[] InArray;
+    break;
+    
+    /* Fase minima */
+  case MKSETFMinimumPhase:
+    /* Calcola i valori per il cepstrum */
+    LogLimit = false;
+    for (I = 0,J = (2 * N) - 1;I < N;I++,J--) {
+      CV = TF[I];
+      if (CV <= (DLReal) 0.0) {
+	LogLimit = true;
+	CSE[I] = CSE[J] = (DLReal) -log(DRCMinFloat);
+      }
+      else
+	CSE[I] = CSE[J] = -std::log<DLReal>(CV);
+    }
+    
+    /* Verifica se si è raggiunto il limite */
+    if (LogLimit == true)
+      sputs("Notice: log limit reached in cepstrum computation.");
+    
+    /* Calcola il cepstrum */
+    IFftw(CSE, InArray, 2 * N);
+    
+    /* Finestra il cepstrum */
+    for (I = 1; I < N;I++)
+      //CSE[I] *= 2;
+      InArray[I] *= 2;
+    for (I = N + 1; I < 2 * N;I++)
+      //CSE[I] = 0;
+      InArray[I] = 0;
+    
+    /* Calcola la trsformata del cepstrum finestrato */
+    Fftw(InArray, CSE,2 * N);
+    
+    /* Effettua il calcolo dell'esponenziale */
+    for (I = 0;I < 2 * N;I++)
+      CSE[I] = std::exp<DLReal>(CSE[I]);
+    
+    /* Determina la risposta del sistema a fase minima */
+    IFftw(CSE, InArray, 2 * N);
+    
+    /* Copia il risultato nell'array destinazione */
+    for (I = 0;I < 2 * N;I++)
+      //TF[I] = std::real<DLReal>(CSE[I]);
+      TF[I] = InArray[I];
+    /* Dealloca l'array per il calcolo filtro target */
+    delete[] CSE;
+    delete[] InArray;
+    break;
+  }
   
   /* Operazione completata */
   return true;
-	}
+}
 
 /* Versione della funzione precedente che effettua un padding del segnale
-   in ingresso alla prima potenza di due disponibile. Il filtro in uscita ha
-   lunghezza pari a TFN. TFN non può essere superiore alla lunghezza usata
-   internamente per il calcolo del filtro, quindi 2 * N se  MExp = 0, oppure
-   2 * nextpow2(N) * 2 ^ MExp per MExp >= 0 */
-bool P2MKSETargetFilter(const DLReal * S,const int N,const int FS,
-			   const DLReal BW,const DLReal PDS,DLReal * TF,const MKSETFType TFType,
-			   const int MExp,const int TFN)
+in ingresso alla prima potenza di due disponibile. Il filtro in uscita ha
+lunghezza pari a TFN. TFN non può essere superiore alla lunghezza usata
+internamente per il calcolo del filtro, quindi 2 * N se  MExp < 0, oppure
+2 * nextpow2(N) * 2 ^ MExp per MExp >= 0 */
+bool P2MKSETargetFilter(const DLReal * S,const int N,const int FS, const DLReal BW,const DLReal PDS,DLReal * TF,const MKSETFType TFType,
+			const int MExp,const int TFN,	const DLReal MinGain,const DLReal DLStart,
+			const int SampleFreq,const DLReal StartFreq, const DLReal EndFreq)
 {
   DLReal * PS;
   DLReal * PTF;
@@ -422,11 +515,12 @@ bool P2MKSETargetFilter(const DLReal * S,const int N,const int FS,
     /* Calcola la potenza di due superiore a N */
     for (PN = 1;PN <= N;PN <<= 1);
     PN *= 1 << MExp;
-  } else
+  }
+  else
     PN = N;
   
   /* Controlla che la lunghezza richiesta sia valida */
-  if (TFN > PN)
+  if (TFN > 2 * PN)
     return false;
   
   /* Alloca l'array per il padding del segnale */
@@ -434,11 +528,10 @@ bool P2MKSETargetFilter(const DLReal * S,const int N,const int FS,
     return false;
   
   /* Alloca l'array per il filtro target */
-  if ((PTF = new DLReal[2 * PN]) == NULL)
-    {
-      delete PS;
-      return false;
-    }
+  if ((PTF = new DLReal[2 * PN]) == NULL) {
+    delete[] PS;
+    return false;
+  }
   
   /* Effettua il padding del segnale */
   for (I = 0;I < N;I++)
@@ -447,9 +540,9 @@ bool P2MKSETargetFilter(const DLReal * S,const int N,const int FS,
     PS[I] = (DLReal) 0.0;
   
   /* Calcola il filtro target */
-  if (MKSETargetFilter(PS,PN,FS,BW,PDS,PTF,TFType) == false) {
-    delete PS;
-    delete PTF;
+  if (MKSETargetFilter(PS,PN,FS,BW,PDS,PTF,TFType,MinGain,DLStart,SampleFreq,StartFreq,EndFreq) == false) {
+    delete[] PS;
+    delete[] PTF;
     return false;
   }
   
@@ -477,8 +570,8 @@ bool P2MKSETargetFilter(const DLReal * S,const int N,const int FS,
   }
   
   /* Dealloca gli array temporanei */
-  delete PS;
-  delete PTF;
+  delete[] PS;
+  delete[] PTF;
   
   /* Operazione completata */
   return true;

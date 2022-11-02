@@ -79,14 +79,17 @@ typedef enum {
    ha lunghezza pari a 2 volte la lunghezza del segnale in ingresso e non è
    finestrato */
 bool MKSETargetFilter(const DLReal * S,const int N,const int FS,
-		      const DLReal BW,const DLReal PDS,DLReal * TF,const MKSETFType TFType);
+		const DLReal BW,const DLReal PDS,DLReal * TF,const MKSETFType TFType,
+		const DLReal MinGain,const DLReal DLStart,const int SampleFreq,
+		const DLReal StartFreq,const DLReal EndFreq);
 
 /* Versione della funzione precedente che effettua un padding del segnale
    in ingresso alla prima potenza di due disponibile. Il filtro in uscita ha
    lunghezza pari a TFN. TFN non può essere superiore alla lunghezza usata
    internamente per il calcolo del filtro, quindi 2 * N se  MExp = 0, oppure
    2 * nextpow2(N) * 2 ^ MExp per MExp >= 0 */
-bool P2MKSETargetFilter(const DLReal * S,const int N,const int FS,
-			const DLReal BW,const DLReal PDS,DLReal * TF,const MKSETFType TFType,
-			const int MExp,const int TFN);
+bool  P2MKSETargetFilter(const DLReal * S,const int N,const int FS,
+		const DLReal BW,const DLReal PDS,DLReal * TF,const MKSETFType TFType,
+		const int MExp,const int TFN,	const DLReal MinGain,const DLReal DLStart,
+		const int SampleFreq,const DLReal StartFreq,const DLReal EndFreq);
 #endif

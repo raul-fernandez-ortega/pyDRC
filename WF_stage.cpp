@@ -18,7 +18,7 @@ void WFstage::NewInCfg(WFParmsType InCfg)
   Cfg = InCfg;
   //process();
 }
-void WFstage::process(void)
+bool WFstage::process(void)
 {
   unsigned int WFSigLen;
   unsigned int InWinLen;
@@ -30,12 +30,14 @@ void WFstage::process(void)
   SLPPrefilteringType SLPType;
   BWPPrefilteringType BWPType;
 
+  sputs("DRC: Window Filtering stage (WF).");
+    
   OutSig->clearData();
   //InWinLen = InSig->getData().size();
   InWinLen = InSig->getWLen();
 
 
-  sputs("Allocating filtering array.");
+  sputs("WF stage: allocating filtering array.");
   WFSigLen = Cfg.WFLowerWindow + Cfg.WFFilterLen - 1;
 
   if (Cfg.WFRTFlag[0] == 'Y')
@@ -58,12 +60,12 @@ void WFstage::process(void)
   switch (Cfg.WFfilterType[0])
     {
     case 'B':
-      sputs("Component band windowing.");
+      sputs("WF stage: component band windowing.");
       
       /* Verifica che la finestratura sia corretta */
       if (((Cfg.WFPreWindowLen == 0) && (OutSig->getWStart() < OutSig->getPSStart())) 
 	  || ((OutSig->getWStart() + Cfg.WFLowerWindow) > OutSig->getPSEnd()))
-      	sputs("!!Warning: input signal too short for correct signal filtering, spurios spikes may be generated.");
+      	sputs("WF stage: !!Warning: input signal too short for correct signal filtering, spurios spikes may be generated.");
 
       OutSig->setData(STL_BWPreFilt(BufSig,Cfg.WFLowerWindow,Cfg.WFUpperWindow,
 				    Cfg.WFFilterLen,Cfg.WFBandSplit,Cfg.WFWindowExponent,
@@ -73,10 +75,10 @@ void WFstage::process(void)
       break;
       
     case 'b':
-      sputs("Component single side band windowing.");
+      sputs("WF stage: component single side band windowing.");
       /* Verifica che la finestratura sia corretta */
       if ((OutSig->getWStart() + Cfg.WFLowerWindow) > OutSig->getPSEnd())
-      	sputs("!!Warning: input signal too short for correct signal filtering, spurios spikes may be generated.");
+      	sputs("WF stage: !!Warning: input signal too short for correct signal filtering, spurios spikes may be generated.");
       
       OutSig->setData(STL_BWPreFilt(BufSig,Cfg.WFLowerWindow,Cfg.WFUpperWindow,
 				    Cfg.WFFilterLen,Cfg.WFBandSplit,Cfg.WFWindowExponent,
@@ -86,12 +88,12 @@ void WFstage::process(void)
       break;
       
     case 'S':
-      sputs("Component sliding lowpass filtering.");
+      sputs("WF stage: component sliding lowpass filtering.");
       
       /* Verifica che la finestratura sia corretta */
       if (((OutSig->getPreWindowLen() == 0) && (OutSig->getWStart() < OutSig->getPSStart()))
 	  || ((OutSig->getWStart() + Cfg.WFLowerWindow) > OutSig->getPSEnd()))
-	sputs("!!Warning: input signal too short for correct signal filtering, spurios spikes may be generated.");
+	sputs("WF stage: !!Warning: input signal too short for correct signal filtering, spurios spikes may be generated.");
       
       OutSig->setData(STL_SLPreFilt(BufSig,Cfg.WFLowerWindow,Cfg.WFUpperWindow,
 				    Cfg.WFFilterLen,Cfg.WFBandSplit,Cfg.WFWindowExponent,
@@ -101,11 +103,11 @@ void WFstage::process(void)
       break;
       
     case 's':
-      sputs("Component single side sliding lowpass filtering.");
+      sputs("WF stage: component single side sliding lowpass filtering.");
       
       /* Verifica che la finestratura sia corretta */
       if ((OutSig->getWStart() + Cfg.WFLowerWindow) > OutSig->getPSEnd())
-      	sputs("!!Warning: input signal too short for correct signal filtering, spurios spikes may be generated.");
+      	sputs("WF stage: !!Warning: input signal too short for correct signal filtering, spurios spikes may be generated.");
       OutSig->setData(STL_SLPreFilt(BufSig,Cfg.WFLowerWindow,Cfg.WFUpperWindow,
 				    Cfg.WFFilterLen,Cfg.WFBandSplit,Cfg.WFWindowExponent,
 				    InSig->getSampleRate(),Cfg.WFStartFreq,Cfg.WFEndFreq,
@@ -127,9 +129,28 @@ void WFstage::process(void)
   /* Verifica se si deve effettuare la finestratura finale */
   if (Cfg.WFRTFlag[0] == 'Y')
     {
-      sputs("Ringing truncation final windowing.");
+      sputs("WF stage: ringing truncation final windowing.");
       STL_BlackmanWindow(OutSig->Data, OutSig->getWStart(),OutSig->getWLen());
     }
-  OutSig->Normalize(Cfg.WFNormFactor, Cfg.WFNormType);
-  OutSig->WriteSignal(Cfg.WFOutFile, Cfg.WFOutFileType);
+  sputs("DRC: Window Filtering stage (WF).");
+  return true;
 }
+
+void WFstage::Normalize(void)
+{
+  if (Cfg.NormFactor > 0) {
+    sputs("WF stage: output component normalization.");
+    OutSig->Normalize(Cfg.NormFactor,Cfg.NormType);
+  }
+}
+
+void WFstage::WriteOutput(void)
+{
+  if (Cfg.OutFile != NULL) {
+    sputsp("WF stage: saving output component: ",Cfg.OutFile);
+    if (OutSig->WriteSignal(Cfg.OutFile, Cfg.OutFileType) == false) {
+      sputs("WF stage: output component save failed.");
+    }
+  }
+}
+

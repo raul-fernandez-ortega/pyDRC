@@ -22,7 +22,7 @@ void PTstage::NewInCfg(PTParmsType InCfg)
   //process();
 }
 
-int PTstage::process(void)
+bool PTstage::process(void)
 {
 
   unsigned int I, K;
@@ -35,7 +35,8 @@ int PTstage::process(void)
   DLReal * ISRevOut;
   STLvectorReal buf;
   STLvectorReal buf2;
-  
+
+  sputs("DRC: Psychoacoustic Target stage (PT).");
   OutSig->clearData();
   
   if (Cfg.PTType[0] != 'N') {
@@ -43,17 +44,17 @@ int PTstage::process(void)
     WStart = InSig->getWStart();
     
     /* Alloca l'array per la convoluzione filtro e risposta */
-    sputs("Allocating psychoacoustic target reference convolution array.");
+    sputs("PT stage: allocating psychoacoustic target reference convolution array.");
     PTTConvLen = WLen + Cfg.BCInitWindow - 1;
     PTTConv = new DLReal[PTTConvLen];
     if (PTTConv == NULL) {
-      sputs("Memory allocation failed.");
-      return 1;
+      sputs("PT stage: memory allocation failed.");
+      return false;
     }
     OInSig = new DLReal[RefSig->getData().size()];
     if (OInSig == NULL) {
-      sputs("Memory allocation failed.");
-      return 1;
+      sputs("PT stage: memory allocation failed.");
+      return false;
     }
     buf = RefSig->getData();
     for(I=0; I < buf.size(); I++)
@@ -61,18 +62,18 @@ int PTstage::process(void)
     
     ISRevOut = new DLReal[InSig->getData().size()];
     if (ISRevOut == NULL) {
-      sputs("Memory allocation failed.");
-      return 1;
+      sputs("PT stage: memory allocation failed.");
+      return false;
     }	
     buf = InSig->getData();
     for(I = 0; I < buf.size(); I++)
       ISRevOut[I] = buf[I];
     
     /* Effettua la convoluzione tra filtro e risposta */
-    sputs("Psychoacoustic target reference convolution...");
+    sputs("PT stage: psychoacoustic target reference convolution...");
     if (FftwConvolve(OInSig,Cfg.BCInitWindow,&ISRevOut[WStart],WLen,PTTConv) == false) {
-      sputs("Convolution failed.");
-      return 1;
+      sputs("PT stage: convolution failed.");
+      return false;
     } 
     /* Effettua la finestratura della convoluzione di riferimento */
     PTTRefLen = (PTTConvLen - Cfg.PTReferenceWindow) / 2;
@@ -89,32 +90,32 @@ int PTstage::process(void)
       switch (Cfg.PTDLType[0]) {
 	/* Fase lineare */
       case 'L':
-	sputs("Target reference signal linear phase dip limiting...");
+	sputs("PT stage: target reference signal linear phase dip limiting...");
 	if (C1LPDipLimit(PTTConv,PTTConvLen,Cfg.PTDLMinGain,Cfg.PTDLStart,
-			 InSig->getSampleRate(),Cfg.PTDLStartFreq,Cfg.PTDLEndFreq,Cfg.PTDLMultExponent) == false) {
-	  sputs("Dip limiting failed.");
-	  return 1;
+			 InSig->getSampleRate(),Cfg.PTDLStartFreq,Cfg.PTDLEndFreq, Cfg.PTDLType[0] == 'P', Cfg.PTDLMultExponent) == false) {
+	  sputs("PT stage: dip limiting failed.");
+	  return false;
 	}
 	break;
 	
 	/* Fase minima */
       case 'M':
-	sputs("Target reference minimum phase dip limiting...");
+	sputs("PT stage: target reference minimum phase dip limiting...");
 	if (C1HMPDipLimit(PTTConv,PTTConvLen,Cfg.PTDLMinGain,Cfg.PTDLStart,
-			  InSig->getSampleRate(),Cfg.PTDLStartFreq,Cfg.PTDLEndFreq,Cfg.PTDLMultExponent) == false) {
-	  sputs("Dip limiting failed.");
-	  return 1;
+			  InSig->getSampleRate(),Cfg.PTDLStartFreq,Cfg.PTDLEndFreq, Cfg.PTDLType[0] == 'W', Cfg.PTDLMultExponent) == false) {
+	  sputs("PT stage: dip limiting failed.");
+	  return false;
 	}
 	break;
       }
     }
     
     /* Alloca l'array per il calcolo del filtro target */
-    sputs("Allocating psychoacoustic target filter array.");
+    sputs("PT stage: allocating psychoacoustic target filter array.");
     PTFilter = new DLReal[Cfg.PTFilterLen];
     if (PTFilter == NULL) {
-      sputs("Memory allocation failed.");
-      return 1;
+      sputs("PT stage: memory allocation failed.");
+      return false;
     }
     
     /* Imposta il tipo filtro target */
@@ -129,60 +130,66 @@ int PTstage::process(void)
     }
     
     /* Calcola il filtro target psicoacustico */
-    sputs("Computing psychoacoustic target filter...");
-    if (P2MKSETargetFilter(PTTConv,PTTConvLen,InSig->getSampleRate(),
+    sputs("PT stage: computing psychoacoustic target filter...");
+    /*if (P2MKSETargetFilter(PTTConv,PTTConvLen,InSig->getSampleRate(),
 			   Cfg.PTBandWidth,Cfg.PTPeakDetectionStrength,PTFilter,TFType,
 			   Cfg.PTMultExponent,Cfg.PTFilterLen) == false) {
       sputs("Psychoacoustic target filter computation failed.");
       return 1;
+      }*/
+    if (P2MKSETargetFilter(&PTTConv[PTTRefLen], Cfg.PTReferenceWindow, InSig->getSampleRate(), Cfg.PTBandWidth, Cfg.PTPeakDetectionStrength,
+			   PTFilter,TFType, Cfg.PTMultExponent, Cfg.PTFilterLen, Cfg.PTDLMinGain, Cfg.PTDLStart,
+			   InSig->getSampleRate(), Cfg.PTDLStartFreq, Cfg.PTDLEndFreq) == false) {
+      sputs("PT stage: psychoacoustic target filter computation failed.");
+      return false;
     }
     
     /* Dealloca l'array per la convoluzione target */
-    delete PTTConv;
+    delete[] PTTConv;
     
     /* Verifica se si deve salvare il filtro psicoacustico */
     if (Cfg.PTFilterFile != NULL) {
       /* Normalizzazione segnale risultante */
       if (Cfg.PTNormFactor > 0) {
-	sputs("Psychoacoustic target filter normalization.");
+	sputs("PT stage: psychoacoustic target filter normalization.");
 	SigNormalize(PTFilter,Cfg.PTFilterLen,Cfg.PTNormFactor, (NormType) Cfg.PTNormType[0]);
       }
       
       /* Salva la componente MP */
-      sputsp("Saving psychoacoustic target filter: ",Cfg.PTFilterFile);
+      sputsp("PT stage: saving psychoacoustic target filter: ",Cfg.PTFilterFile);
       for(L = 0; L < Cfg.PTFilterLen; L++)
 	buf2.push_back(PTFilter[L]);
       if (SND_WriteSignal(Cfg.PTFilterFile, buf2, 0, Cfg.PTFilterLen, InSig->getSampleRate(), (IFileType) Cfg.PTFilterFileType[0]) == false) {
 	sputs("Psychoacoustic target filter save failed.");
-	return 1;
+	return false;
       }
       /*if (WriteSignal(Cfg.PTFilterFile,PTFilter,Cfg.PTFilterLen, (IFileType) Cfg.PTFilterFileType[0]) == false) {
 	sputs("Psychoacoustic target filter save failed.");
-	return 1;
+	return false;
 	}*/
     }
     
     /* Alloca l'array per la convoluzione filtro e target */
-    sputs("Allocating psychoacoustic target correction filter convolution array.");
+    sputs("PT stage: allocating psychoacoustic target correction filter convolution array.");
     PTTConvLen = Cfg.PTFilterLen  + WLen - 1;
     PTTConv = new DLReal[PTTConvLen];
     if (PTTConv == NULL) {
-      sputs("Memory allocation failed.");
-      return 1;
+      sputs("PT stage: memory allocation failed.");
+      return false;
     }
     
     /* Effettua la convoluzione tra filtro e target */
-    sputs("Psychoacoustic target correction filter convolution...");
+    sputs("PT stage: psychoacoustic target correction filter convolution...");
     if (FftwConvolve(PTFilter,Cfg.PTFilterLen,&ISRevOut[WStart],WLen,PTTConv) == false) {
-      sputs("Convolution failed.");
-      return 1;
+      sputs("PT stage: convolution failed.");
+      return false;
     }
     /* Dealloca il filtro target */
     delete PTFilter;
     
     /* Finestratura finale filtro risultante */
     if (Cfg.PTOutWindow > 0) {
-      sputs("Psychoacoustic target correction filter windowing.");
+      sputs("PT stage: psychoacoustic target correction filter windowing.");
       
       /* Verifica il tipo di filtro target */
       switch (TFType) {
@@ -220,9 +227,25 @@ int PTstage::process(void)
     
     for(K = 0; K < PTTConvLen; K++)
       OutSig->Data.push_back(PTTConv[K]);
-    
-    OutSig->Normalize(Cfg.PTNormFactor, Cfg.PTNormType);
-    OutSig->WriteSignal(Cfg.PTOutFile, Cfg.PTOutFileType);
   }
-  return 0;
+  sputs("DRC: Finished Psychoacoustic Target stage (PT).");
+  return true;
+}
+
+void PTstage::Normalize(void)
+{
+  if (Cfg.PTNormFactor > 0) {
+    sputs("PT stage: output component normalization.");
+    OutSig->Normalize(Cfg.PTNormFactor,Cfg.PTNormType);
+  }
+}
+
+void PTstage::WriteOutput(void)
+{
+  if (Cfg.PTOutFile != NULL) {
+    sputsp("PT stage: saving output component: ",Cfg.PTOutFile);
+    if (OutSig->WriteSignal(Cfg.PTOutFile, Cfg.PTOutFileType) == false) {
+      sputs("PT stage: output component save failed.");
+    }
+  }
 }

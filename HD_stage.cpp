@@ -21,7 +21,7 @@ void HDstage::NewInCfg(HDParmsType InCfg)
   Cfg = InCfg;
 }
 
-void HDstage::process(void)
+bool HDstage::process(void)
 {
   unsigned int I;
   unsigned int inDataSize;
@@ -29,25 +29,27 @@ void HDstage::process(void)
   DLReal *MPSig;
   DLReal *EPSig;
 
+  sputs("DRC: Homomorphic Deconvolution stage (HD).");
+  
   MPSignal->clearData();
   EPSignal->clearData();  
   inDataSize = InSignal->getData().size();
 
-  sputs("Allocating homomorphic deconvolution arrays.");
+  sputs("HD stage: Allocating homomorphic deconvolution arrays.");
   InSig = new DLReal[inDataSize];
   if (InSig == NULL) {
-    sputs("Memory allocation failed.");
-    return;
+    sputs("HD stage: Memory allocation failed.");
+    return false;
   }
   MPSig = new DLReal[2 * inDataSize];
   if (MPSig == NULL) {
-    sputs("Memory allocation failed.");
-    return;
+    sputs("HD stage: Memory allocation failed.");
+    return false;
   }
   EPSig = new DLReal[inDataSize];
   if (EPSig == NULL) {
-    sputs("Memory allocation failed.");
-    return ;
+    sputs("HD stage: Memory allocation failed.");
+    return false;
   }
   
   /* Azzera gli array */
@@ -59,17 +61,17 @@ void HDstage::process(void)
     EPSig[I] = 0;
 
   /* Effettua la deconvoluzione omomorfa*/
-  sputs("Homomorphic deconvolution stage...");
+  sputs("HD stage: Homomorphic deconvolution stage...");
   if (CepstrumHD(InSig,&MPSig[inDataSize/2-(1-(inDataSize%2))], EPSig, inDataSize, Cfg.HDMultExponent) == false) {
-    sputs("Homomorphic deconvolution failed.");
-    return;
+    sputs("HD stage: Homomorphic deconvolution failed.");
+    return false;
   }
   for(I=0; I < inDataSize; I++) {
     MPSignal->Data.push_back(MPSig[I]);
     EPSignal->Data.push_back(EPSig[I]);
   }
-  Normalize();
-  WriteOutput();
+  sputs("DRC: Finished Homomorphic Deconvolution stage (HD).");
+  return true;
 }
 
 void HDstage::Normalize(void)

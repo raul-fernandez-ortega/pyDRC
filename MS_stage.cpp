@@ -21,18 +21,20 @@ void MSstage::NewInCfg(MSParmsType InCfg)
   process();
 }
 
-void MSstage::process(void)
+bool MSstage::process(void)
 {
   unsigned int I;
   DLReal *PSOutSig;
   DLReal *MPSig;
+
+  sputs("DRC: Minimum Phase Filter Extraction stage (MS).");
   OutSig->Data.clear();
   /* Alloca gli array per la deconvoluzione omomorfa */
-  sputs("Allocating homomorphic deconvolution arrays.");
+  sputs("MS stage: allocating homomorphic deconvolution arrays.");
   MPSig = new DLReal[InSig->Data.size()];
   if (MPSig == NULL) {
-    sputs("Memory allocation failed.");
-    return;
+    sputs("MS stage: memory allocation failed.");
+    return false;
   }
   
   /* Azzera gli array */
@@ -41,44 +43,50 @@ void MSstage::process(void)
   
   PSOutSig = new DLReal[InSig->Data.size()];
   if (PSOutSig == NULL) {
-    sputs("Memory allocation failed.");
-    return;
+    sputs("MS stage: memory allocation failed.");
+    return false;
   }
   
   /* Azzera gli array */
   for (I = 0;I < InSig->Data.size();I++)
     PSOutSig[I] = InSig->Data[I];    
   /* Effettua la deconvoluzione omomorfa*/
-  sputs("MP filter extraction homomorphic deconvolution stage...");
+  sputs("MS stage: MP filter extraction homomorphic deconvolution stage...");
   if (CepstrumHD(PSOutSig,MPSig,NULL, InSig->Data.size(),Cfg.MSMultExponent) == false) {
-    sputs("Homomorphic deconvolution failed.");
-    return ;
+    sputs("MS stage: homomorphic deconvolution failed.");
+    return false;
   }
   
   /* Verifica se si deve finestrare il filtro */
-  sputs("MP filter extraction windowing.");
+  sputs("MS stage: MP filter extraction windowing.");
   if (Cfg.MSOutWindow > 0) {
     HalfBlackmanWindow(MPSig,Cfg.MSOutWindow,0,WRight);
     OutSig->setWLen(Cfg.MSOutWindow);
   } else
     OutSig->setWLen(InSig->getWLen());
-  
-  /* Normalizzazione segnale risultante */
+
   for(I = 0; I < (unsigned int)OutSig->getWLen(); I++)
     OutSig->Data.push_back(MPSig[I]);
-  
+
+  sputs("DRC: Finished Minimum Phase Filter Extraction stage (MS).");
+  return true;
+}
+
+
+void MSstage::Normalize(void)
+{
   if (Cfg.MSNormFactor > 0) {
-    sputs("Minimum phase filter normalization.");
-    OutSig->Normalize(Cfg.MSNormFactor, Cfg.MSNormType);
+    sputs("MS stage: output component normalization.");
+    OutSig->Normalize(Cfg.MSNormFactor,Cfg.MSNormType);
   }
-  
-  /* Salva il il filtro a fase minima */
-  sputsp("Saving MP filter signal: ",Cfg.MSOutFile);
-  /* Verifica se deve essere estratto il filtro a fase minima */
+}
+
+void MSstage::WriteOutput(void)
+{
   if (Cfg.MSOutFile != NULL) {
-    if (OutSig->WriteSignal(Cfg.MSOutFile, Cfg.MSOutFileType) == false)	{
-      sputs("MP filter signal save failed.");
-      return;
+    sputsp("MS stage: saving output component: ",Cfg.MSOutFile);
+    if (OutSig->WriteSignal(Cfg.MSOutFile, Cfg.MSOutFileType) == false) {
+      sputs("MS stage: output component save failed.");
     }
-  } 
+  }
 }

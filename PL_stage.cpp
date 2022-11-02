@@ -19,11 +19,13 @@ void PLstage::NewInCfg(PLParmsType InCfg)
   //process();
 }
 
-void PLstage::process(void)
+bool PLstage::process(void)
 {
   int I, J;
   STLvectorReal BufSig;
 
+
+  sputs("DRC: Peak Limiting stage (PL).");  
   OutSig->clearData();
   for(I = InSig->getWStart(); I <  InSig->getWLen(); I++)
       BufSig.push_back(InSig->Data[I]);
@@ -34,26 +36,22 @@ void PLstage::process(void)
 	{
 	  /* Fase lineare */
 	case 'L':
-	  sputs("Linear phase peak limiting...");
-	  if (STL_C1LPPeakLimit(BufSig,Cfg.PLMaxGain,Cfg.PLStart,
-				InSig->getSampleRate(),Cfg.PLStartFreq,Cfg.PLEndFreq,
-				Cfg.PLMultExponent) == false)
-	    {
-	      sputs("Peak limiting failed.");
-	      return;
-	    }
+	  sputs("PL stage: linear phase peak limiting...");
+	  if (STL_C1LPPeakLimit(BufSig,Cfg.PLMaxGain,Cfg.PLStart, InSig->getSampleRate(),
+				Cfg.PLStartFreq, Cfg.PLEndFreq, Cfg.PLType[0] == 'P', Cfg.PLMultExponent) == false) {
+	    sputs("PL stage: peak limiting failed.");
+	    return false;
+	  }
 	  break;
 	  
 	  /* Fase minima */
 	case 'M':
-	  sputs("Minimum phase peak limiting...");
-	  if (STL_C1HMPPeakLimit(BufSig,Cfg.PLMaxGain,Cfg.PLStart,
-			     InSig->getSampleRate(),Cfg.PLStartFreq,Cfg.PLEndFreq,
-				 Cfg.PLMultExponent) == false)
-	    {
-	      sputs("Peak limiting failed.");
-	      return;
-	    }
+	  sputs("PL stage: minimum phase peak limiting...");
+	  if (STL_C1HMPPeakLimit(BufSig,Cfg.PLMaxGain,Cfg.PLStart,InSig->getSampleRate(),
+				 Cfg.PLStartFreq,Cfg.PLEndFreq,Cfg.PLType[0] == 'W',Cfg.PLMultExponent) == false) {
+	    sputs("PL stage: peak limiting failed.");
+	    return false;
+	  }
 	  break;
 	}
     }
@@ -63,11 +61,31 @@ void PLstage::process(void)
     {
       OutSig->setWStart((InSig->getWLen() - Cfg.PLOutWindow) / 2);
       OutSig->setWLen(Cfg.PLOutWindow);
-      sputs("Peak limited signal final windowing.");
+      sputs("PL stage: peak limited signal final windowing.");
       STL_BlackmanWindow(BufSig,OutSig->getWStart(),OutSig->getWLen());
     }
   for(J=0; J < OutSig->getWStart() + OutSig->getWLen(); J++)
     OutSig->Data.push_back(BufSig[J]);
-  OutSig->Normalize(Cfg.PLNormFactor, Cfg.PLNormType);
-  OutSig->WriteSignal(Cfg.PLOutFile, Cfg.PLOutFileType);
+  
+  sputs("DRC: Finished Peak Limiting stage (PL).");
+  return true;
+  
+}
+
+void PLstage::Normalize(void)
+{
+  if (Cfg.PLNormFactor > 0) {
+    sputs("PL stage: output component normalization.");
+    OutSig->Normalize(Cfg.PLNormFactor,Cfg.PLNormType);
+  }
+}
+
+void PLstage::WriteOutput(void)
+{
+  if (Cfg.PLOutFile != NULL) {
+    sputsp("PL stage: saving output component: ",Cfg.PLOutFile);
+    if (OutSig->WriteSignal(Cfg.PLOutFile, Cfg.PLOutFileType) == false) {
+      sputs("PL stage: output component save failed.");
+    }
+  }
 }

@@ -13,8 +13,8 @@ def my_init_posix():
     g['CC'] = 'g++'
     #g['LDSHARED'] = 'g++ -shared -Xlinker'
     g['LDSHARED'] = 'g++ -pthread -shared -Wl,-O1 -Wl,-Bsymbolic-functions'
+    #g['CFLAGS']='-fno-strict-aliasing -DNDEBUG -O2 -Wall -Wno-maybe-uninitialized -Wno-pointer-arith'
     g['CFLAGS']='-fno-strict-aliasing -DNDEBUG -O2 -Wall -Wno-maybe-uninitialized -Wno-pointer-arith'
-    g['OPT']='-DNDEBUG -O2 -Wall -Wno-maybe-uninitialized -Wno-pointer-arith'
 
 sysconfig._init_posix = my_init_posix
 
@@ -30,9 +30,7 @@ setup(
     author = "Raul Fernandez",
     author_email = "raul00fernandez@gmail.com",
     options={'build_ext':{'swig_opts':'-c++'}},
-    py_modules = ['pyDRC'],
-    #package_dir={'pyDRC':'.'},
-    #packages =['pyDRC'],
+    py_modules = ['pyDRC','drc','drccfg','pca_drc'],
     ext_modules = [Extension("_pyDRC", ["pyDRC.i",
                                         "fft_stl.cpp","fft.cpp",
                                         "fir_stl.cpp","fir.cpp",
@@ -50,7 +48,8 @@ setup(
                                         "BC_stage.cpp", "HD_stage.cpp", "WF_stage.cpp",
                                         "DL_stage.cpp", "HR_stage.cpp", "IS_stage.cpp",
 					"PT_stage.cpp", "ER_stage.cpp", "PL_stage.cpp", 
-                                        "TC_stage.cpp", "PS_stage.cpp", "MS_stage.cpp"
+                                        "TC_stage.cpp", "PS_stage.cpp", "MS_stage.cpp",
+                                        "MC_stage.cpp", "BCDL_stage.cpp"
                                         ],
                              swig_opts=['-c++'], language='C++',
                              include_dirs=include_dirs,

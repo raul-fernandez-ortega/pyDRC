@@ -6,39 +6,23 @@ double STL_GetRMSLevel(const STLvectorReal Sig)
   double RMSLevel;
   RMSLevel = (double) GetRMSLevel(Sig.data(),Sig.size());
   return RMSLevel;
-  /*unsigned int I, SigLen = Sig.size();
-  double RMSLevel;
-  DLReal *InSig = new DLReal[SigLen];
-  for(I = 0; I < SigLen; I++)
-    InSig[I] = Sig[I];
-  RMSLevel = (double) GetRMSLevel(InSig,SigLen);
-  delete InSig;
-  return RMSLevel; */
 }
  
 /* Frequency band filtered RMS level calculation */
 double STL_GetBLRMSLevel(const STLvectorReal Sig, const int SampleFreq, const DLReal StartFreq, 
-			 const DLReal EndFreq, const int MExp)
+			 const DLReal EndFreq, const DLReal W, const int MExp)
 {
   double BLRMSLevel;
-  BLRMSLevel = (double) GetBLRMSLevel(Sig.data(), Sig.size(), SampleFreq, StartFreq, EndFreq, MExp);
+  BLRMSLevel = (double) GetBLRMSLevel(Sig.data(), Sig.size(), SampleFreq, StartFreq, EndFreq, W, MExp);
   return BLRMSLevel;
-  /*unsigned int I,SigLen = Sig.size();
-  double BLRMSLevel;
-  DLReal *InSig = new DLReal[SigLen];
-  for(I = 0; I < SigLen; I++)
-    InSig[I] = Sig[I];
-  BLRMSLevel = (double) GetBLRMSLevel(InSig, SigLen, SampleFreq, StartFreq, EndFreq, MExp);
-  delete InSig;
-  return BLRMSLevel; */
 }
 
 /* Frequency band filtered RMS level calculation. FFT input */
 double STL_GetBLFFTRMSLevel(const STLvectorComplex FFTArray, const int SampleFreq, 
-			    const DLReal StartFreq, const DLReal EndFreq)
+			    const DLReal StartFreq, const DLReal EndFreq, const DLReal W)
 {
   double BLRMSLevel;
-  BLRMSLevel = (double) GetBLFFTRMSLevel(FFTArray.data(), FFTArray.size() , SampleFreq, StartFreq, EndFreq);
+  BLRMSLevel = (double) GetBLFFTRMSLevel(FFTArray.data(), FFTArray.size() , SampleFreq, StartFreq, EndFreq, W);
   return BLRMSLevel;
 }
 
@@ -51,14 +35,14 @@ void STL_SigNormalize(STLvectorReal &Sig, const DLReal NormFactor, const NormTyp
 
 /* Linear phase Dip Limiting, with frequency band filtered RMS calculation */
 bool STL_LPDipLimit(STLvectorReal &Sig, const DLReal MinGain, const DLReal DLStart, 
-		    const int SampleFreq, const DLReal StartFreq, const DLReal EndFreq, 
+		    const int SampleFreq, const DLReal StartFreq, const DLReal EndFreq, const DLReal W,
 		    const int MExp)
 {
   unsigned int I,SigLen = Sig.size();
   DLReal *InSig = new DLReal[SigLen];
   for(I = 0; I < SigLen; I++)
     InSig[I] = Sig[I];
-  if (LPDipLimit(InSig, SigLen, MinGain, DLStart, SampleFreq, StartFreq, EndFreq, MExp) == true) {
+  if (LPDipLimit(InSig, SigLen, MinGain, DLStart, SampleFreq, StartFreq, EndFreq, W, MExp) == true) {
     for(I = 0; I < SigLen; I++)
       Sig[I] = InSig[I];
     delete InSig;
@@ -72,14 +56,14 @@ bool STL_LPDipLimit(STLvectorReal &Sig, const DLReal MinGain, const DLReal DLSta
 /* Linear phase Dip Limiting, with frequency band filtered RMS calculation.*/ 
 /* Keeping first derivative continuity on the limiting point */
 bool STL_C1LPDipLimit(STLvectorReal &Sig, const DLReal MinGain, const DLReal DLStart, 
-		      const int SampleFreq, const DLReal StartFreq, const DLReal EndFreq, 
+		      const int SampleFreq, const DLReal StartFreq, const DLReal EndFreq, const DLReal W,
 		      const int MExp)
 {
   unsigned int I,SigLen = Sig.size();
   DLReal *InSig = new DLReal[SigLen];
   for(I = 0; I < SigLen; I++)
     InSig[I] = Sig[I];
-  if (C1LPDipLimit(InSig, SigLen, MinGain, DLStart, SampleFreq, StartFreq, EndFreq, MExp) == true) {
+  if (C1LPDipLimit(InSig, SigLen, MinGain, DLStart, SampleFreq, StartFreq, EndFreq, W, MExp) == true) {
     for(I = 0; I < SigLen; I++)
       Sig[I] = InSig[I];
     delete InSig;
@@ -93,13 +77,13 @@ bool STL_C1LPDipLimit(STLvectorReal &Sig, const DLReal MinGain, const DLReal DLS
 /* Minimum phase Dip Limiting with frequency band filtered RMS calculation. Hilbert Transform version */
 bool STL_HMPDipLimit(STLvectorReal &Sig, const DLReal MinGain, const DLReal DLStart, 
 		     const int SampleFreq, const DLReal StartFreq, 
-		     const DLReal EndFreq, const int MExp)
+		     const DLReal EndFreq, const DLReal W, const int MExp)
 {
   unsigned int I,SigLen = Sig.size();
   DLReal *InSig = new DLReal[SigLen];
   for(I = 0; I < SigLen; I++)
     InSig[I] = Sig[I];
-  if (HMPDipLimit(InSig, SigLen, MinGain, DLStart, SampleFreq, StartFreq, EndFreq, MExp) == true) {
+  if (HMPDipLimit(InSig, SigLen, MinGain, DLStart, SampleFreq, StartFreq, EndFreq, W, MExp) == true) {
     for(I = 0; I < SigLen; I++)
       Sig[I] = InSig[I];
     delete InSig;
@@ -114,13 +98,13 @@ bool STL_HMPDipLimit(STLvectorReal &Sig, const DLReal MinGain, const DLReal DLSt
 /* Keeping first derivative continuity on the limiting point */
 bool STL_C1HMPDipLimit(STLvectorReal &Sig, const DLReal MinGain, const DLReal DLStart, 
 		       const int SampleFreq, const DLReal StartFreq, 
-		       const DLReal EndFreq, const int MExp)
+		       const DLReal EndFreq, const DLReal W, const int MExp)
 {
   unsigned int I,SigLen = Sig.size();
   DLReal *InSig = new DLReal[SigLen];
   for(I = 0; I < SigLen; I++)
     InSig[I] = Sig[I];
-  if (C1HMPDipLimit(InSig, SigLen, MinGain, DLStart, SampleFreq, StartFreq, EndFreq, MExp) == true) {
+  if (C1HMPDipLimit(InSig, SigLen, MinGain, DLStart, SampleFreq, StartFreq, EndFreq, W, MExp) == true) {
     for(I = 0; I < SigLen; I++)
       Sig[I] = InSig[I];
     delete InSig;
@@ -133,14 +117,14 @@ bool STL_C1HMPDipLimit(STLvectorReal &Sig, const DLReal MinGain, const DLReal DL
 
 /* Linear phase Peak Limiting, with frequency band filtered RMS calculation */
 bool STL_LPPeakLimit(STLvectorReal &Sig, const DLReal MaxGain, const DLReal PLStart, 
-		     const int SampleFreq, const DLReal StartFreq, const DLReal EndFreq,
+		     const int SampleFreq, const DLReal StartFreq, const DLReal EndFreq, const DLReal W,
 		     const int MExp)
 {
   unsigned int I,SigLen = Sig.size();
   DLReal *InSig = new DLReal[SigLen];
   for(I = 0; I < SigLen; I++)
     InSig[I] = Sig[I];
-  if (LPPeakLimit(InSig, SigLen, MaxGain, PLStart, SampleFreq, StartFreq, EndFreq, MExp) == true) {
+  if (LPPeakLimit(InSig, SigLen, MaxGain, PLStart, SampleFreq, StartFreq, EndFreq, W, MExp) == true) {
     for(I = 0; I < SigLen; I++)
       Sig[I] = InSig[I];
     delete InSig;
@@ -155,13 +139,13 @@ bool STL_LPPeakLimit(STLvectorReal &Sig, const DLReal MaxGain, const DLReal PLSt
 /* Keeping first derivative continuity on the limiting point */
 bool STL_C1LPPeakLimit(STLvectorReal &Sig, const DLReal MaxGain,const DLReal PLStart, 
 		       const int SampleFreq, const DLReal StartFreq, 
-		       const DLReal EndFreq, const int MExp)
+		       const DLReal EndFreq, const DLReal W, const int MExp)
 {
   unsigned int I,SigLen = Sig.size();
   DLReal *InSig = new DLReal[SigLen];
   for(I = 0; I < SigLen; I++)
     InSig[I] = Sig[I];
-  if(C1LPPeakLimit(InSig, SigLen, MaxGain, PLStart, SampleFreq, StartFreq, EndFreq, MExp) == true) {
+  if(C1LPPeakLimit(InSig, SigLen, MaxGain, PLStart, SampleFreq, StartFreq, EndFreq, W, MExp) == true) {
     for(I = 0; I < SigLen; I++)
       Sig[I] = InSig[I];
     delete InSig;
@@ -174,14 +158,14 @@ bool STL_C1LPPeakLimit(STLvectorReal &Sig, const DLReal MaxGain,const DLReal PLS
 
 /* Minimum phase Peak Limiting with frequency band filtered RMS calculation. Hilbert Transform version */
 bool STL_HMPPeakLimit(STLvectorReal &Sig, const DLReal MaxGain, const DLReal PLStart, 
-		      const int SampleFreq, const DLReal StartFreq, const DLReal EndFreq, 
+		      const int SampleFreq, const DLReal StartFreq, const DLReal EndFreq, const DLReal W, 
 		      const int MExp)
 {
   unsigned int I,SigLen = Sig.size();
   DLReal *InSig = new DLReal[SigLen];
   for(I = 0; I < SigLen; I++)
     InSig[I] = Sig[I];
-  if(HMPPeakLimit(InSig, SigLen, MaxGain, PLStart, SampleFreq, StartFreq, EndFreq, MExp) == true) {
+  if(HMPPeakLimit(InSig, SigLen, MaxGain, PLStart, SampleFreq, StartFreq, EndFreq, W, MExp) == true) {
     for(I = 0; I < SigLen; I++)
       Sig[I] = InSig[I];
     delete InSig;
@@ -196,13 +180,13 @@ bool STL_HMPPeakLimit(STLvectorReal &Sig, const DLReal MaxGain, const DLReal PLS
 /* Keeping first derivative continuity on the limiting point */
 bool STL_C1HMPPeakLimit(STLvectorReal &Sig, const DLReal MaxGain, const DLReal PLStart, 
 			const int SampleFreq, const DLReal StartFreq, 
-			const DLReal EndFreq, const int MExp)
+			const DLReal EndFreq, const DLReal W, const int MExp)
 {
   unsigned int I,SigLen = Sig.size();
   DLReal *InSig = new DLReal[SigLen];
   for(I = 0; I < SigLen; I++)
     InSig[I] = Sig[I];
-  if(C1HMPPeakLimit(InSig, SigLen, MaxGain, PLStart, SampleFreq, StartFreq, EndFreq, MExp) == true) {
+  if(C1HMPPeakLimit(InSig, SigLen, MaxGain, PLStart, SampleFreq, StartFreq, EndFreq, W, MExp) == true) {
     for(I = 0; I < SigLen; I++)
       Sig[I] = InSig[I];
     delete InSig;

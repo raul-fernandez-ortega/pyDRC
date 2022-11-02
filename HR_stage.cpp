@@ -24,7 +24,7 @@ void HRstage::NewInCfg(HRParmsType InCfg)
   Cfg = InCfg;
 }
 
-void HRstage::process(void)
+bool HRstage::process(void)
 {
   int I, J;
   int MPEPSigLen, MPDataLen, EPDataLen;
@@ -34,6 +34,8 @@ void HRstage::process(void)
   DLReal *EPSig;
   DLReal *EPPFSig;
 
+  sputs("DRC: Homomorphic Recovery stage (HR).");
+    
   MPDataLen = MPInSig->getData().size();
   EPDataLen = EPInSig->getData().size();
   MPSignal->clearData();
@@ -47,11 +49,11 @@ void HRstage::process(void)
     EPSig[I] = EPInSig->Data[I];
   }
   if (Cfg.HRMPHDRecover[0] == 'Y') {
-    sputs("Allocating homomorphic deconvolution arrays.");
+    sputs("HR stage: allocating homomorphic deconvolution arrays.");
     MPSig = new DLReal[2 * MPInSig->getWLen()];
     if (MPSig == NULL) {
-      sputs("Memory allocation failed.");
-      return;
+      sputs("HR stage: memory allocation failed.");
+      return false;
     }
       
     /* Azzera gli array */
@@ -62,8 +64,8 @@ void HRstage::process(void)
     if (Cfg.HRMPEPPreserve[0] == 'Y') {
       MPEPSig = new DLReal[MPInSig->getWLen()];
       if (MPEPSig == NULL) {
-	sputs("Memory allocation failed.");
-	return;
+	sputs("HR stage: memory allocation failed.");
+	return false;
       }
 	  
       /* Azzera gli array */
@@ -73,11 +75,11 @@ void HRstage::process(void)
       MPEPSig = NULL;
     
     /* Effettua la deconvoluzione omomorfa*/
-    sputs("MP Recover homomorphic deconvolution stage...");
+    sputs("HR stage: MP Recover homomorphic deconvolution stage...");
     if (CepstrumHD(&MPPFSig[MPInSig->getWStart()], &MPSig[MPInSig->getWLen() / 2 - (1 - (MPInSig->getWLen() % 2))],MPEPSig,
 		   MPInSig->getWLen(),Cfg.HRMPHDMultExponent) == false) {
-      sputs("Homomorphic deconvolution failed.");
-      return;
+      sputs("HR stage: Homomorphic deconvolution failed.");
+      return false;
     }
       
     /* Ricopia la componente MP nell'array originale */
@@ -90,7 +92,7 @@ void HRstage::process(void)
   
   /* Verifica se si deve effettuare la finestratura finale */
   if (Cfg.HRMPFinalWindow > 0) {
-    sputs("Minimum phase component final windowing.");
+    sputs("HR stage: minimum phase component final windowing.");
     BlackmanWindow(&MPPFSig[MPInSig->getWStart()],MPInSig->getWLen());
     
     /* Controlla se si deve preservare la componente EP della fase minima */
@@ -104,27 +106,27 @@ void HRstage::process(void)
   /* Controlla se si deve preservare la componente EP della fase minima */
   if (Cfg.HRMPHDRecover[0] == 'Y' && Cfg.HRMPEPPreserve[0] == 'Y') {
     /* Alloca l'array per la convoluzione */
-    sputs("Allocating minimum phase EP recovering arrays.");
+    sputs("HR stage: allocating minimum phase EP recovering arrays.");
     MPEPSigLen = MPInSig->getWLen() + EPInSig->getWLen() - 1;
     EPPFSig = new DLReal[MPEPSigLen];
     if (EPSig == NULL) {
-      sputs("Memory allocation failed.");
-      return;
+      sputs("HR stage: memory allocation failed.");
+      return false;
     }
     
     /* Effettua la convoluzione */
-    sputs("Minimum phase EP recovering...");
+    sputs("HR stage: minimum phase EP recovering...");
     if (FftwConvolve(MPEPSig,MPInSig->getWLen(),EPSig,EPInSig->getWLen(),EPPFSig) == false) {
-      sputs("Convolution failed.");
-      return ;
+      sputs("HR stage: convolution failed.");
+      return false;
     }
     /* Recupera la componente EP */
     for (I = 0, J= MPInSig->getWLen() / 2; I < MPInSig->getWLen();I++, J++) {
       EPSig[I] = EPPFSig[J];
     }
     /* Dealloca l'array temporaneo convoluzione */
-    //delete MPEPSig;
-    //delete EPSig;
+    delete[] MPEPSig;
+    delete[] EPSig;
   }
   /* Recupera la componente EP */
   
@@ -134,8 +136,36 @@ void HRstage::process(void)
   EPSignal->setWLen(EPInSig->getWLen());
   MPSignal->setWStart(MPInSig->getWStart());
   MPSignal->setWLen(MPInSig->getWLen());
-  MPSignal->Normalize(Cfg.HRMPNormFactor, Cfg.HRMPNormType);
-  MPSignal->WriteSignal(Cfg.HRMPOutFile,  Cfg.HRMPOutFileType);
-  EPSignal->Normalize(Cfg.HREPNormFactor, Cfg.HREPNormType);
-  EPSignal->WriteSignal(Cfg.HREPOutFile,  Cfg.HREPOutFileType);
+
+  sputs("DRC: Finished Homomorphic Recovery stage (HR).");
+  return true;
+}
+
+void HRstage::Normalize(void)
+{
+  if (Cfg.HRMPNormFactor > 0) {
+    sputs("HR stage: Minimum phase component normalization.");
+    MPSignal->Normalize(Cfg.HRMPNormFactor,Cfg.HRMPNormType);
+  }
+  if (Cfg.HREPNormFactor > 0) {
+    sputs("HR stage: Excess phase component normalization.");
+    EPSignal->Normalize(Cfg.HREPNormFactor,Cfg.HREPNormType);
+  }
+}
+
+void HRstage::WriteOutput(void)
+{
+  if (Cfg.HRMPOutFile != NULL) {
+    sputsp("HR stage: Saving minimum phase component: ",Cfg.HRMPOutFile);
+    if (MPSignal->WriteSignal(Cfg.HRMPOutFile, Cfg.HRMPOutFileType) == false) {
+      sputs("HR stage: Minimum phase component save failed.");
+    }
+  }
+  if (Cfg.HREPOutFile != NULL) {
+    sputsp("HR stage: Saving excess phase component: ",Cfg.HREPOutFile);
+    EPSignal->setWStart(0);
+    if (EPSignal->WriteSignal(Cfg.HREPOutFile, Cfg.HREPOutFileType) == false) {
+      sputs("HR stage: Excess phase component save failed.");
+    }
+  }
 }

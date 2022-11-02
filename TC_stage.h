@@ -39,8 +39,10 @@ class TCstage
   void NewFilterSignal(DRCSignal *FtInputSig);
   void NewInCfg(TCParmsType InCfg);
   ~TCstage();
-  void process(void);
+  bool process(void);
   TCParmsType getCfgParms(void) { return Cfg; };
   DRCSignal *getOutSig() { return OutSig; };
+  void Normalize(void);
+  void WriteOutput(void);
 };
 #endif

@@ -12,6 +12,8 @@
 %include DRCbwprefilt.i  
 %include DRCslprefilt.i
 %include BC_stage.i
+%include MC_stage.i
+%include BCDL_stage.i
 %include HD_stage.i
 %include WF_stage.i
 %include HR_stage.i

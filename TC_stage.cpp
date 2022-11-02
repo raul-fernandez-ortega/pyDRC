@@ -27,18 +27,13 @@ void TCstage::NewInCfg(TCParmsType InCfg)
   Cfg = InCfg;
 }
 
-void TCstage::process(void)
+bool TCstage::process(void)
 {
   DLReal SRMSValue;
-
-  sputsp("Saving test convolution signal: ",Cfg.TCOutFile);
-  if (OutSig->WriteSignal(Cfg.TCOutFile, Cfg.TCOutFileType)== false)  {
-    sputs("Test convolution save failed.");
-    return;
-  }
+  sputs("DRC: Test Convolution stage (TC).");
 
   /* Effettua la convoluzione */
-  sputs("Convolving input signal with target response signal...");
+  sputs("TC stage: convolving input signal with target response signal...");
   OutSig->setData(STL_Convolve_part(MsInSig->getData(), MsInSig->getWStart(), 
 				    MsInSig->getWLen(),
 				    FtInSig->getData(), FtInSig->getWStart(), 
@@ -47,16 +42,10 @@ void TCstage::process(void)
   /* Calcola il valore RMS del segnale dopo la filtratura */
   SRMSValue = STL_GetRMSLevel(OutSig->getData());
   if (SRMSValue >= 0)
-    printf("Filtered signal RMS level %f (%f dB).\n",(double) SRMSValue, (double) (20 * log10((double) SRMSValue)));
+    printf("TC stage: filtered signal RMS level %f (%f dB).\n",(double) SRMSValue, (double) (20 * log10((double) SRMSValue)));
   else
-    printf("Filtered signal RMS level %f (-inf dB).\n",(double) SRMSValue);
+    printf("TC stage: filtered signal RMS level %f (-inf dB).\n",(double) SRMSValue);
   fflush(stdout);
-  
-  /* Normalizzazione segnale risultante */
-  if (Cfg.TCNormFactor > 0) {
-    sputs("Test convolution signal normalization.");
-    OutSig->Normalize(Cfg.TCNormFactor, Cfg.TCNormType);
-  }
       
   /* Calcola la dimensione in uscita */
   if (Cfg.PSFilterType[0] == 'T')
@@ -64,13 +53,27 @@ void TCstage::process(void)
   else
     OutSig->setWLen(MsInSig->getWLen()+FtInSig->getWLen()+1);
       
+  sputs("TC stage: test convolution done.");
+  sputs("DRC: Finished Test Convolution stage (TC).");
+  return true;
+}
+
+
+void TCstage::Normalize(void)
+{
+  if (Cfg.TCNormFactor > 0) {
+    sputs("TC stage: output component normalization.");
+    OutSig->Normalize(Cfg.TCNormFactor,Cfg.TCNormType);
+  }
+}
+
+void TCstage::WriteOutput(void)
+{
   if (Cfg.TCOutFile != NULL) {
-    /* Salva il segnale convoluzione test */
-    sputsp("Saving test convolution signal: ",Cfg.TCOutFile);
-    if (OutSig->WriteSignal(Cfg.TCOutFile, Cfg.TCOutFileType)== false) {
-      sputs("Test convolution save failed.");
-      return;
+    sputsp("TC stage: saving output component: ",Cfg.TCOutFile);
+    if (OutSig->WriteSignal(Cfg.TCOutFile, Cfg.TCOutFileType) == false) {
+      sputs("TC stage: output component save failed.");
     }
   }
-  sputs("Test convolution done.");
 }
+
