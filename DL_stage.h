@@ -30,10 +30,11 @@ class DLstage
   void NewInputSignal(DRCSignal *InputSig);
   void NewInCfg(DLParmsType InCfg);
   ~DLstage() {};
-  void process(void);
+  bool process(void);
   DLParmsType getCfgParms(void) { return Cfg; };
   DRCSignal *getOutSig() { return OutSig; };
-  
+  void Normalize(void);
+  void WriteOutput(void);
   
 };
 #endif

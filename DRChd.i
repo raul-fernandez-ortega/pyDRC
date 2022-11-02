@@ -9,7 +9,21 @@
 %include DRCbaseclass.i
 %include stl_type.h
 %include hd_stl.h
+%pythoncode %{
 
+import numpy as np
+  
+def CepstrumHD(In, N, MExp):
+  Mp = np.array([],np.float32)
+  Ep = np.array([],np.float32)
+  return _pyDRC.STL_CepstrumHD(In, Mp, Ep, N, MExp)
+
+def HilbertHD(In, N, MExp):
+  Mp = np.array([],np.float32)
+  Ep = np.array([],np.float32)
+  return _pyDRC.STL_HilbertHD(In, Mp, Ep, N, MExp)
+    
+%}
 %feature("autodoc","
 Homomorphic deconvolution (HD) process DRC class.
 Attributes:

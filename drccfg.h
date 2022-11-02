@@ -1,7 +1,7 @@
 /****************************************************************************
 
     DRC: Digital Room Correction
-    Copyright (C) 2002, 2003 Denis Sbragion
+    Copyright (C) 2002-2017 Denis Sbragion
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,16 +19,7 @@
 
 		You can contact the author on Internet at the following address:
 
-				d.sbragion@infotecna.it
-
-		This program uses the parsecfg library from Yuuki  NINOMIYA.  De­
-		tails  on  this  library  can be found in the parsecfg.c and par­
-		secfg.h files.  Many thanks to Yuuki NINOMIYA for this useful li­
-		brary.
-
-		This program uses  also the FFT  routines from  Takuya Ooura and
-		the GNU Scientific  Library (GSL).  Many thanks  to Takuya Ooura
-		and the GSL developers for these efficient routines.
+				d.sbragion@neomerica.it
 
 ****************************************************************************/
 
@@ -49,13 +40,17 @@
 	/* Prefissi variabili
 		BC = Base Configuration
 		HD = Homomorphic Deconvolution
-		MP = Minimum phase band windowing stage
-		EP = Excess fase phase band windowing stage
+		MP = Minimum phase frequency dependent windowing
 		DL = Dip limiting stage
+		EP = Excess phase frequency dependent windowing
 		PC = Prefiltering completion stage
 		IS = Inversion stage
-		PS = Postfiltering stage
+		PT = Psychoacoustic target stage
 		PL = Peak limiting stage
+		RT = Ringing truncation stage
+		PS = Postfiltering stage
+		MC = Mic compensation stage
+		MS = Minimum phase filter extraction stage
 		TC = Test convolution stage
 	*/
 	typedef struct
@@ -72,7 +67,30 @@
 			int BCPreWindowGap;
 			DRCFloat BCNormFactor;
 			char * BCNormType;
-		        char * BCInOutFile;
+
+      /* Mic compensation stage */
+			char * MCFilterType;
+			char * MCInterpolationType;
+			int MCMultExponent;
+			int MCFilterLen;
+			int MCNumPoints;
+			char * MCPointsFile;
+			char * MCMagType;
+			int MCOutWindow;
+			char * MCFilterFile;
+			char * MCFilterFileType;
+			DRCFloat MCNormFactor;
+			char * MCNormType;
+			char * MCOutFile;
+			char * MCOutFileType;
+
+			/* Base configuration dip limiting stage */
+			char * BCDLType;
+			DRCFloat BCDLMinGain;
+			DRCFloat BCDLStart;
+			DRCFloat BCDLStartFreq;
+			DRCFloat BCDLEndFreq;
+			int BCDLMultExponent;
 
 			/* Homomorphic Deconvolution */
 			int HDMultExponent;
@@ -163,6 +181,27 @@
 			char * ISOutFile;
 			char * ISOutFileType;
 
+			/* Psychoacoustic target stage */
+			char * PTType;
+			int PTReferenceWindow;
+			char * PTDLType;
+			DRCFloat PTDLMinGain;
+			DRCFloat PTDLStart;
+			DRCFloat PTDLStartFreq;
+			DRCFloat PTDLEndFreq;
+			int PTDLMultExponent;
+			DRCFloat PTBandWidth;
+			DRCFloat PTPeakDetectionStrength;
+			int PTMultExponent;
+			int PTFilterLen;
+			char * PTFilterFile;
+			char * PTFilterFileType;
+			DRCFloat PTNormFactor;
+			char * PTNormType;
+			char * PTOutFile;
+			char * PTOutFileType;
+			int PTOutWindow;
+
 			/* Peak limiting stage */
 			char * PLType;
 			DRCFloat PLMaxGain;
@@ -208,23 +247,10 @@
 			char * PSOutFile;
 			char * PSOutFileType;
 
-			/* Mic correction stage */
-			char * MCFilterType;
-			char * MCInterpolationType;
-			int MCMultExponent;
-			int MCFilterLen;
-			int MCNumPoints;
-			char * MCPointsFile;
-			char * MCMagType;
-			int MCOutWindow;
-			DRCFloat MCNormFactor;
-			char * MCNormType;
-			char * MCOutFile;
-			char * MCOutFileType;
-
 			/* Minimum phase filter extraction stage */
 			int MSMultExponent;
 			int MSOutWindow;
+			int MSFilterDelay;
 			DRCFloat MSNormFactor;
 			char * MSNormType;
 			char * MSOutFile;
@@ -249,12 +275,12 @@
 	extern CfgParmsType Cfg;
 
 	/* Definizione struttura file di configurazione */
-	extern cfgStruct CfgParmsDef[];
+	extern CfgParameter CfgParmsDef[];
 
 	/* Controllo validità parametri di configurazione */
 	int CheckDRCCfg(const CfgParmsType * DRCCfg);
 
 	/* Impostazione directory base di lavoro */
-	int SetupDRCCfgBaseDir(CfgParmsType * DRCCfg, const cfgStruct * CfgParmsDef,
+	int SetupDRCCfgBaseDir(CfgParmsType * DRCCfg, const CfgParameter * CfgParmsDef,
 		const CmdLineType * OptData);
 #endif

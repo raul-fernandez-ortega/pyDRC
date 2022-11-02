@@ -3,6 +3,10 @@ from os.path import exists, isdir
 import re
 
 class DRCCfg:
+
+    #PCA Configuration
+    PCAImpulsesDir = None
+    
     # Base file directory
     BCBaseDir = './'
 
@@ -19,6 +23,34 @@ class DRCCfg:
     BCNormType = None
     BCOutFile = None
     BCOutFileType = None
+
+    # MC = Mic compensation stage
+    MCFilterType = None
+    MCInterpolationType = None
+    MCMultExponent = 0.0
+    MCFilterLen = 0 
+    MCNumPoints = 0
+    MCPointsFile = None 
+    MCMagType = None
+    MCFilterFile = None
+    MCFilterFileType = None
+    MCOutWindow = 0 
+    MCNormFactor = 0.0
+    MCNormType = None
+    MCOutFile = None
+    MCOutFileType = None
+
+    #Dip limiting preventivo
+    BCDLType = None
+    BCDLMinGain = 0.0
+    BCDLStartFreq = 0
+    BCDLEndFreq = 0
+    BCDLStart = 0
+    BCDLMultExponent = 0.0
+    BCDLNormFactor = 0.0
+    BCDLNormType = None
+    BCDLOutFile = None
+    BCDLOutFileType = None
 
     # HD = Homomorphic Deconvolution
     HDMultExponent = 0
@@ -175,20 +207,6 @@ class DRCCfg:
     PSOutFile = None
     PSOutFileType = None
     
-    # MC = Mic compensation stage
-    MCFilterType = 0
-    MCInterpolationType = None
-    MCMultExponent = 0
-    MCFilterLen = 0
-    MCNumPoints = 0
-    MCPointsFile = None
-    MCMagType = None
-    MCOutWindow = 0
-    MCNormFactor = 0.0
-    MCNormType = None
-    MCOutFile = None
-    MCOutFileType = None
-    
     # Minimum phase filter extraction stage
     MSMultExponent = 0
     MSOutWindow = 0
@@ -268,39 +286,130 @@ class DRCCfg:
             self.BCBaseDir +='/'
         if not isdir(self.BCBaseDir):
             print("BC->BCBaseDir: No base directory found.")
-            return 1
-        if not self.BCInFile:
+            return False
+        if self.PCAImpulsesDir and not isdir(self.PCAImpulsesDir):
+            print("PCAImpulsesDir: directory not found")
+            return False
+        if not self.BCInFile and not self.PCAImpulsesDir:
             print("BC->BCInFile: No input file name supplied.")
-            return 1
+            return False
         if not self.BCInFileType:
             print("BC->BCInFileType: No input file type supplied.")
-            return 1
+            return False
         if not exists(self.BCBaseDir + self.BCInFile):
             print("BC->BCInFile: Input file does not exists.")
-            return 1
+            return False
         if not self.BCImpulseCenterMode:
             print("BC->BCImpulseCenterMode: No impulse center mode supplied.")
-            return 1
+            return False
         if self.BCNormFactor > 0 and not self.BCNormType:
             print("BC->BCNormType: No input normalization type supplied.")
-            return 1
+            return False
         if self.BCInitWindow < 3:
             print("BC->BCInitWindow: Initial window should be at least 3.")
-            return 1
+            return False
         if self.BCPreWindowGap < 0:
             print("BC->BCPreWindowGap: BCPreWindowGap can't be less than 0.")
-            return 1
+            return False
         if not self.BCPreWindowLen:
             print("BC->BCPreWindowLen: No value supplied.")
-            return 1
+            return False
         if not self.BCPreWindowGap:
             print("BC->BCPreWindowGap: No value supplied.")
-            return 1
+            return False
         if self.BCPreWindowLen > 0:
             if self.BCPreWindowLen + self.BCPreWindowGap > self.BCInitWindow:
                 print("BC: BCPreWindowLen + BCPreWindowGap must be less than BCInitWindow.")
-                return 1
+                return False
             
+        ################################################################################
+        #                                                                              #
+        # MC - Microphone Compensation configuration check                             #
+        #                                                                              #
+        ################################################################################
+
+        if not self.MCFilterType:
+            print("MC->MCFilterType: No filter type supplied.")
+            return False
+        if self.MCFilterType[0] != 'N':
+            if self.MCFilterType[0] != 'L' and self.MCFilterType[0] != 'M' and self.MCFilterType[0] != 'T':
+                print("MC->MCFilterType: Invalid filter type supplied.")
+                return False
+            if not self.MCInterpolationType:
+                print("MC->MCInterpolationType: No interpolation type supplied.")
+                return False
+            if self.MCInterpolationType[0] != 'L' and self.MCInterpolationType[0] != 'G'\
+               and self.MCInterpolationType[0] != 'R' and self.MCInterpolationType[0] != 'S' \
+                   and self.MCInterpolationType[0] != 'P' and self.MCInterpolationType[0] != 'H':
+                print("MC->MCInterpolationType: Invalid interpolation type supplied.")
+                return False
+            if not self.MCMagType:
+                print("MC->MCMagType: No filter definition magnitude type supplied.")
+                return False
+            if self.MCMagType[0] != 'L' and self.MCMagType[0] != 'D':
+                print("MC->MCMagType: Invalid filter definition magnitude type supplied.")
+                return False
+            if not self.MCPointsFile:
+                print("MC->MCPointsFile: No correction point file supplied.")
+                return False
+            if not exists(self.BCBaseDir + self.MCPointsFile):
+                print("MC->MCPointsFile: MCPointsFile",self.MCPointsFile,"does not exists.")
+                return False
+            if self.MCNumPoints < 0 or self.MCNumPoints == 1:
+                print("MC->MCNumPoints: Invalid MCNumPoints supplied, it must be 0 or at least 2.")
+                return False
+            if self.MCNormFactor and not self.MCNormType:
+                print("MC->MCNormFactor: No normalization type supplied.")
+                return False
+            if self.MCOutFile and not self.MCOutFileType:
+                print("MC->MCOutFileType: No output file type supplied.")
+                return False
+            if self.MCFilterLen <= 0:
+                print("PS->MCFilterLen: MCFilterLen must be greater than 0.")
+                return False
+            if self.MCFilterType[0] == 'L':
+                if self.MCOutWindow > PWLen + self.MCFilterLen - 1:
+                    print("MC->MCOutWindow: MCOutWindow too big.")
+                    return False
+                if self.MCOutWindow > 0:
+                    PWLen = self.MCOutWindow
+                else:
+                    PWLen += self.MCFilterLen - 1
+            elif self.MCFilterType[0] == 'M':
+                if self.MCOutWindow > PWLen:
+                    print("MC->MCOutWindow: MCOutWindow too big.")
+                    return False
+            elif self.PSFilterType[0] == 'T':
+                if self.PSOutWindow > PWLen / 2 + self.ISPELowerWindow + self.PSFilterLen - 1:
+                    print("PS->PSOutWindow: PSOutWindow too big.")
+                    return False
+            if self.MCOutWindow> 0:
+                PWLen = self.MCOutWindow
+            else:
+                PWLen = self.BCInitWindow
+        else:
+            PWLen = self.BCInitWindow
+
+        ################################################################################
+        #                                                                              #
+        # BCDL - Base configuration dip limiting configuration check                   #
+        #                                                                              #
+        ################################################################################
+        
+        if self.BCDLType == None:
+            print("BC->BCDLType: No BCDLType supplied.")
+            return False
+        if self.BCDLType[0] != 'L' and self.BCDLType[0] != 'M' and self.BCDLType[0] != 'P' and self.BCDLType[0] != 'W':
+            print("BC->BCDLType: Invalid dip limiting type supplied.")
+            return False
+        if self.BCDLStart < 0.0:
+            print("BC->BCDLStart: BCDLStart must be greater than or equal to 0.")
+            return False
+        self.BCDLNormFactor = self.BCNormFactor
+        self.BCDLNormType = self.BCNormType
+        self.BCDLOutFile = self.BCOutFile
+        self.BCDLOutFileType = self.BCOutFileType
+        
         ################################################################################
         #                                                                              #
         # HD - Homomorphic Deconvolution configuration check                           #
@@ -309,17 +418,17 @@ class DRCCfg:
     
         if self.HDMPNormFactor > 0 and not self.HDMPNormType:
             print("HD->HDMPNormType: No MP normalization type supplied.")
-            return 1
+            return False
 
         if self.HDEPNormFactor > 0 and not self.HDEPNormType:
             print("HD->HDEPNormType: No EP normalization type supplied.")
-            return 1
+            return False
         if self.HDMPOutFile and not self.HDMPOutFileType:
             print("HD->HDMPOutFileType: No MP output file type supplied.")
-            return 1
+            return False
         if self.HDEPOutFile and not self.HDEPOutFileType:
             print("HD->HDEPOutFileType: No EP output file type supplied.")
-            return 1
+            return False
         
         ################################################################################
         #                                                                              #
@@ -329,53 +438,53 @@ class DRCCfg:
     
         if not self.MPPrefilterType:
             print("MP->MPPrefilterType: No MPPrefilterType supplied.")
-            return 1
+            return False
         if self.MPPrefilterType[0] != 'B' and self.MPPrefilterType[0] != 'b' \
                and self.MPPrefilterType[0] != 'S' and self.MPPrefilterType[0] != 's':
             print("MP->MPPrefilterType: Invalid MPPrefilterType supplied.")
-            return 1
+            return False
         if not self.MPPrefilterFctn:
             print("MP->MPPrefilterFctn: No MPPrefilterFctn supplied.")
-            return 1
+            return False
         if self.MPPrefilterFctn[0] != 'P' and self.MPPrefilterFctn[0] != 'B':
             print("MP->MPPrefilterFctn: Invalid MPPrefilterFctn supplied.")
-            return 1
+            return False
         if self.MPWindowGap < 0:
             print("MP->MPWindowGap: MPWindowGap must be greater or equal to 0.")
-            return 1
+            return False
         if self.MPLowerWindow <= 0:
             print("MP->MPLowerWindow: No MPLowerWindow supplied.")
-            return 1
+            return False
         if self.MPLowerWindow > 2 * self.BCInitWindow:
             print("MP->MPLowerWindow: MPLowerWindow can't be greater than 2 * BCInitWindow.")
-            return 1
+            return False
         if self.MPUpperWindow <= 0:
             print("MP->MPUpperWindow: No MPUpperWindow supplied.")
-            return 1
+            return False
         if self.MPFSharpness <= 0.0:
             print("MP->MPFSharpness: MPFSharpness must be greater than 0.")
-            return 1
+            return False
         if self.MPUpperWindow > 2 * self.BCInitWindow:
             print("MP->MPUpperWindow: MPUpperWindow can't be greater than 2 * BCInitWindow.")
-            return 1
+            return False
         if self.MPWindowExponent <= 0.0:
             print("MP->MPWindowExponent: MPWindowExponent must be greater than 0.")
-            return 1
+            return False
         if not self.MPHDRecover:
             print("MP->MPHDRecover: No MPHDRecover supplied.")
-            return 1
+            return False
         if not self.MPEPPreserve:
             print("MP->MPEPPreserve: No MPEPPreserve supplied.")
-            return 1
+            return False
         if self.MPPFNormFactor > 0 and not self.MPPFNormType:
             print("MP->MPPFNormType: No PF normalization type supplied.")
-            return 1
+            return False
         if self.MPPFOutFile and not self.MPPFOutFileType:
             print("MP->MPPFOutFileType: No MPPF output file type supplied.")
-            return 1
+            return False
         if self.MPPFFinalWindow > self.MPLowerWindow + self.MPFilterLen - 1:
             print("MP->MPPFFinalWindow: MPPFFinalWindow can't be greater than MPLowerWindow + MPFilterLen - 1.")
-            return 1
+            return False
         if self.MPPFFinalWindow <= 0:
             PWLen = self.MPLowerWindow + self.MPFilterLen - 1
         else:
@@ -389,13 +498,13 @@ class DRCCfg:
 
         if not self.DLType:
             print("DL->DLType: No DLType supplied.")
-            return 1
+            return False
         if self.DLType[0] != 'L' and self.DLType[0] != 'M':
             print("DL['DLType: Invalid dip limiting type supplied.")
-            return 1
+            return False
         if self.DLStart < 0.0:
             print("DL->DLStart: DLStart must be greater than or equal to 0.")
-            return 1
+            return False
         
         ################################################################################
         #                                                                              #
@@ -405,56 +514,56 @@ class DRCCfg:
 
         if not self.EPPrefilterType:
             print("EP->EPPrefilterType: No EPPrefilterType supplied.")
-            return 1
+            return False
         if self.EPPrefilterType[0] != 'B' and self.EPPrefilterType[0] != 'b' \
                and self.EPPrefilterType[0] != 'S' and self.EPPrefilterType[0] != 's':
             print("EP->EPPrefilterType: Invalid EPPrefilterType supplied.")
-            return 1
+            return False
         if not self.EPPrefilterFctn:
             print("EP->EPPrefilterFctn: No EPPrefilterFctn supplied.")
-            return 1
+            return False
         if self.EPPrefilterFctn[0] != 'P' and self.EPPrefilterFctn[0] != 'B':
             print("EP->EPPrefilterFctn: Invalid EPPrefilterFctn supplied.")
-            return 1
+            return False
         if self.EPWindowGap < 0:
             print("EP->EPWindowGap: EPWindowGap must be greater or equal to 0.")
-            return 1
+            return False
         if self.EPLowerWindow <= 0:
             print("EP->EPLowerWindow: EPLowerWindow must be greater than 0.")
-            return 1			
+            return False			
         if self.EPLowerWindow > 2 * self.BCInitWindow:
             print("EP->EPLowerWindow: EPLowerWindow can't be greater than 2 * BCInitWindow.")
-            return 1
+            return False
         if self.EPUpperWindow <= 0:
             print("EP->EPUpperWindow: EPUpperWindow must be greater than 0.")
-            return 1
+            return False
         if self.EPUpperWindow > 2 * self.BCInitWindow:
             print("EP->EPUpperWindow: EPUpperWindow can't be greater than 2 * BCInitWindow.")
-            return 1
+            return False
         if self.EPFSharpness <= 0.0:
             print("EP->EPFSharpness: EPFSharpness must be greater than 0.")
-            return 1
+            return False
         if self.EPWindowExponent <= 0.0:
             print("EP->EPWindowExponent: EPWindowExponent must be greater than 0.")
-            return 1
+            return False
         if self.EPPFFlatGain > 0 and not self.EPPFFlatType:
             print("EP->EPPFFlatType: No EPPFFlatType supplied.")
-            return 1
+            return False
         if self.EPPFFlatType[0] != 'L' and self.EPPFFlatType[0] != 'M' and self.EPPFFlatType[0] != 'D':
             print("EP->EPPFFlatType: Invalid EPPFFlatType supplied.")
-            return 1
+            return False
         if self.EPPFNormFactor > 0 and not self.EPPFNormType:
             print("EP->EPPFNormType: No PF normalization type supplied.")
-            return 1
+            return False
         if self.EPPFOutFile and not self.EPPFOutFileType:
             print("EP->EPPFOutFileType: No EPPF output file type supplied.")
-            return 1
+            return False
         #if not self.EPPFFinalWindow:
         #    print "EP->EPPFFinalWindow: No EPPF final window length supplied."
-        #    return 1
+        #    return False
         if self.EPPFFinalWindow > self.EPLowerWindow + self.EPFilterLen - 1:
             print("EP->EPPFFinalWindow: EPPFFinalWindow can't be greater than EPLowerWindow + EPFilterLen - 1.")
-            return 1
+            return False
         if self.EPPFFinalWindow <= 0:
             PWLen += self.EPLowerWindow + self.EPFilterLen - 2
         else:
@@ -468,16 +577,16 @@ class DRCCfg:
 
         if self.PCOutWindow < 0:
             print("PC->PCOutWindow: No PCOutWindow supplied.")
-            return 1
+            return False
         if self.PCNormFactor > 0  and not self.PCNormType:
             print("PC->PCNormType: No normalization type supplied.")
-            return 1
+            return False
         if self.PCOutFile and not self.PCOutFileType:
             print("PC->PCOutFileType: No output file type supplied.")
-            return 1
+            return False
         if self.PCOutWindow > PWLen:
             print("PC->PCOutWindow: PCOutWindow too big.")
-            return 1
+            return False
 	
         ################################################################################
         #                                                                              #
@@ -487,40 +596,40 @@ class DRCCfg:
 
         if not self.ISType:
             print("IS->ISType: No inversion stage type supplied.")
-            return 1
+            return False
         if self.ISType[0] != 'L' and self.ISType[0] != 'T':
             print("IS->ISType: Invalid inversion stage type supplied.")
-            return 1
+            return False
         if not self.ISPETType:
             print("IS->ISPETType: No pre echo truncation type supplied.")
-            return 1
+            return False
         if self.ISPETType[0] != 'f' and self.ISPETType[0] != 's':
             print("IS->ISPETType: Invalid pre echo truncation type supplied.")
-            return 1
+            return False
         if not self.ISPrefilterFctn:
             print("IS->ISPrefilterFctn: No ISPrefilterFctn supplied.")
-            return 1
+            return False
         if self.ISPrefilterFctn[0] != 'P' and self.ISPrefilterFctn[0] != 'B':
             print("IS->ISPrefilterFctn: Invalid ISPrefilterFctn supplied.")
-            return 1
+            return False
         if self.ISPEFSharpness <= 0.0:
             print("IS->ISPEFSharpness: ISPEFSharpness must be greater than 0.")
-            return 1
+            return False
         if self.ISNormFactor and self.ISNormFactor > 0 and not self.ISNormType:
             print("IS->ISNormType: No normalization type supplied.")
-            return 1
+            return False
         if self.ISOutFile and not self.ISOutFileType:
             print("IS->ISOutFileType: No output file type supplied.")
-            return 1
+            return False
         if self.ISOutWindow < 0:
             print("IS->ISOutWindow: ISOutWindow must be greater than 0.")
-            return 1
+            return False
         if self.ISType[0] == 'L' and self.ISOutWindow > self.PCOutWindow:
             print("IS->ISOutWindow: ISOutWindow too big.")
-            return 1
+            return False
         if self.ISType[0] == 'T' and self.ISOutWindow > PWLen:
             print("IS->ISOutWindow: ISOutWindow too big.")
-            return 1
+            return False
         if self.ISOutWindow > 0:
             PWLen = self.ISOutWindow
 
@@ -532,22 +641,22 @@ class DRCCfg:
 
         if not self.PLType:
             print("PL->PLType: No peak limiting type supplied.")
-            return 1
+            return False
         if self.PLType[0] != 'L' and self.PLType[0] != 'M':
             print("PL->PLType: Invalid peak limiting type supplied.")
-            return 1
+            return False
         if self.PLStart < 0.0:
             print("PL->PLStart: PLStart must be greater than or equal to 0.")
-            return 1
+            return False
         if self.PLNormFactor and not self.PLNormType:
             print("PL->PLNormType: No normalization type supplied.")
-            return 1
+            return False
         if self.PLOutFile and not self.PLOutFileType:
             print("PL->PLOutFileType: No output file type supplied.")
-            return 1
+            return False
         if self.PLOutWindow > PWLen:
             print("PL->PLOutWindow: PLOutWindow too big.")
-            return 1
+            return False
         if self.PLOutWindow > 0:
             PWLen = self.PLOutWindow
             
@@ -559,56 +668,56 @@ class DRCCfg:
 
         if not self.RTType:
             print("RT->RTType: No RTType supplied.")
-            return 1
+            return False
         if self.RTType[0] != 'N' and self.RTType[0] != 'B' and self.RTType[0] != 'b'\
                and self.RTType[0] != 'S' and self.RTType[0] != 's':
             print("RT->RTType: Invalid RTType supplied.")
-            return 1
+            return False
         if not self.RTPrefilterFctn:
             print("RT->RTPrefilterFctn: No RTPrefilterFctn supplied.")
-            return 1
+            return False
         if self.RTPrefilterFctn[0] != 'P' and self.RTPrefilterFctn[0] != 'B':
             print("RT->RTPrefilterFctn: Invalid RTPrefilterFctn supplied.")
-            return 1
+            return False
         if self.RTWindowGap < 0:
             print("RT->RTWindowGap: RTWindowGap must be greater or equal to 0.")
-            return 1
+            return False
         if self.RTLowerWindow <= 0:
             print("RT->RTLowerWindow: RTLowerWindow must be greater than 0.")
-            return 1
+            return False
         if self.RTLowerWindow > PWLen:
             print("RT->RTLowerWindow: RTLowerWindow too big.")
-            return 1
+            return False
         if self.RTUpperWindow < 0:
             print("RT->RTUpperWindow: RTUpperWindow must be greater than 0.")
-            return 1
+            return False
         if self.RTFSharpness < 0.0:
             print("RT->RTFSharpness: RTFSharpness must be greater than 0.")
-            return 1
+            return False
         if not self.RTUpperWindow:
             print("RT->RTUpperWindow: No upper window length supplied.")
-            return 1
+            return False
         if self.RTUpperWindow > PWLen:
             print("RT->RTUpperWindow: RTUpperWindow too big.")
-            return 1
+            return False
         if not self.RTWindowExponent:
             print("RT->RTWindowExponent: No window exponent supplied.")
-            return 1
+            return False
         if self.RTWindowExponent <= 0.0:
             print("RT->RTWindowExponent: RTWindowExponent must be greater than 0.")
-            return 1
+            return False
         if self.RTNormFactor and not self.RTNormType:
             print("RT->RTNormType: No RT normalization type supplied.")
-            return 1
+            return False
         if self.RTOutFile and not self.RTOutFileType:
             print("RT->RTOutFileType: No RT output file type supplied.")
-            return 1
+            return False
         if self.RTOutWindow < 0:
             print("RT->RTOutWindow: RTOutWindow must be greater than 0.")
-            return 1
+            return False
         if self.RTOutWindow > self.RTLowerWindow+ self.RTFilterLen - 1:
             print("RT->RTOutWindow: RTOutWindow can't be greater than RTLowerWindow + RTFilterLen - 1.")
-            return 1
+            return False
         if self.RTOutWindow <= 0:
             PWLen = self.RTLowerWindow + self.RTFilterLen - 1
         else:
@@ -622,126 +731,58 @@ class DRCCfg:
 
         if not self.PSFilterType:
             print("PS->PSFilterType: No filter type supplied.")
-            return 1
+            return False
         if self.PSFilterType[0] != 'L' and self.PSFilterType[0] != 'M' and self.PSFilterType[0] != 'T':
             print("PS->PSFilterType: Invalid filter type supplied.")
-            return 1
+            return False
         if not self.PSInterpolationType:
             print("PS->PSInterpolationType: No interpolation type supplied.")
-            return 1
+            return False
         if self.PSInterpolationType[0] != 'L' and self.PSInterpolationType[0] != 'G'\
                and self.PSInterpolationType[0] != 'R' and self.PSInterpolationType[0] != 'S' \
 	       and self.PSInterpolationType[0] != 'P' and self.PSInterpolationType[0] != 'H':
             print("PS->PSInterpolationType: Invalid interpolation type supplied.")
-            return 1
+            return False
         if not self.PSMagType:
             print("PS->PSMagType: No filter definition magnitude type supplied.")
-            return 1
+            return False
         if self.PSMagType[0] != 'L' and self.PSMagType[0] != 'D':
             print("PS->PSMagType: Invalid filter definition magnitude type supplied.")
-            return 1
+            return False
         if not self.PSPointsFile:
             print("PS->PSPointsFile: No correction point file supplied.")
-            return 1
+            return False
         if not exists(self.BCBaseDir + self.PSPointsFile):
             print("PS->PSPointsFile: ",self.PSPointsFile,"PSPointsFile does not exists.")
-            return 1
+            return False
         if self.PSNumPoints < 0 or self.PSNumPoints == 1:
             print("PS->PSNumPoints: Invalid PSNumPoints supplied, it must be 0 or at least 2.")
-            return 1
+            return False
         if self.PSNormFactor and not self.PSNormType:
             print("PS->PSNormFactor: No normalization type supplied.")
-            return 1
+            return False
         if self.PSOutFile and not self.PSOutFileType:
             print("PS->PSOutFileType: No output file type supplied.")
-            return 1
+            return False
         if self.PSFilterLen <= 0:
             print("PS->PSFilterLen: PSFilterLen must be greater than 0.")
-            return 1
+            return False
         if self.PSOutWindow <= 0:
             print("PS->PSOutWindow: PSOutWindow must be greater than 0.")
-            return 1
+            return False
         if self.PSFilterType[0] == 'L':
             if self.PSOutWindow > PWLen + self.PSFilterLen - 1:
                 print("PS->PSOutWindow: PSOutWindow too big.")
-                return 1
+                return False
             PWLen += self.PSFilterLen - 1
         elif self.PSFilterType[0] == 'M':
             if self.PSOutWindow > PWLen:
                 print("PS->PSOutWindow: PSOutWindow too big.")
-                return 1
+                return False
             elif self.PSFilterType[0] == 'T':
                 if self.PSOutWindow > PWLen / 2 + self.ISPELowerWindow + self.PSFilterLen - 1:
                     print("PS->PSOutWindow: PSOutWindow too big.")
-                    return 1
-
-        ################################################################################
-        #                                                                              #
-        # MC - Microphone Compensation configuration check                             #
-        #                                                                              #
-        ################################################################################
-    
-        if not self.MCFilterType:
-            print("MC->MCFilterType: No filter type supplied.")
-            return 1
-        if self.MCFilterType[0] != 'L' and self.MCFilterType[0] != 'M' and self.MCFilterType[0] != 'T':
-            print("MC->MCFilterType: Invalid filter type supplied.")
-            return 1
-        if not self.MCInterpolationType:
-            print("MC->MCInterpolationType: No interpolation type supplied.")
-            return 1
-        if self.MCInterpolationType[0] != 'L' and self.MCInterpolationType[0] != 'G'\
-               and self.MCInterpolationType[0] != 'R' and self.MCInterpolationType[0] != 'S' \
-               and self.MCInterpolationType[0] != 'P' and self.MCInterpolationType[0] != 'H':
-            print("MC->MCInterpolationType: Invalid interpolation type supplied.")
-            return 1
-        if not self.MCMagType:
-            print("MC->MCMagType: No filter definition magnitude type supplied.")
-            return 1
-        if self.MCMagType[0] != 'L' and self.MCMagType[0] != 'D':
-            print("MC->MCMagType: Invalid filter definition magnitude type supplied.")
-            return 1
-        if not self.MCPointsFile:
-            print("MC->MCPointsFile: No correction point file supplied.")
-            return 1
-        if not exists(self.BCBaseDir + self.MCPointsFile):
-            print("MC->MCPointsFile: MCPointsFile",self.MCPointsFile,"does not exists.")
-            return 1
-        if self.MCNumPoints < 0 or self.MCNumPoints == 1:
-            print("MC->MCNumPoints: Invalid MCNumPoints supplied, it must be 0 or at least 2.")
-            return 1
-        if self.MCNormFactor and not self.MCNormType:
-            print("MC->MCNormFactor: No normalization type supplied.")
-            return 1
-        if self.MCOutFile and not self.MCOutFileType:
-            print("MC->MCOutFileType: No output file type supplied.")
-            return 1
-        if self.MCFilterLen <= 0:
-            print("PS->MCFilterLen: MCFilterLen must be greater than 0.")
-            return 1
-        if self.MCOutWindow <= 0:
-            print("MC->MCOutWindow: MCOutWindow must be greater than 0.")
-            return 1
-        if self.MCFilterType[0] == 'L':
-            if self.MCOutWindow > PWLen + self.MCFilterLen - 1:
-                print("MC->MCOutWindow: MCOutWindow too big.")
-                return 1
-            if self.MCOutWindow > 0:
-                PWLen = self.MCOutWindow
-            else:
-                PWLen += self.MCFilterLen - 1
-        elif self.MCFilterType[0] == 'M':
-            if self.MCOutWindow > PWLen:
-                print("MC->MCOutWindow: MCOutWindow too big.")
-                return 1
-            elif self.PSFilterType[0] == 'T':
-                if self.PSOutWindow > PWLen / 2 + self.ISPELowerWindow + self.PSFilterLen - 1:
-                    print("PS->PSOutWindow: PSOutWindow too big.")
-                    return 1
-        if self.MCOutWindow> 0:
-            PWLen = self.MCOutWindow
-        else:
-            PWLen += self.MCFilterLen - 1
+                    return False
                         
         ################################################################################
         #                                                                              #
@@ -751,16 +792,16 @@ class DRCCfg:
 
         if not self.MSOutWindow:
             print("MS->MSOutWindow: No output window length supplied.")
-            return 1
+            return False
         if self.MSOutWindow > PWLen:
             print("MS->MSOutWindow: MSOutWindow too big.")
-            return 1
+            return False
         if self.MSNormFactor and not self.MSNormType:
             print("MS->MSNormType: No normalization type supplied.")
-            return 1
+            return False
         if self.MSOutFile and not self.MSOutFileType:
             print("MS->MSOutFileType: No output file type supplied.")
-            return 1
+            return False
 	
         ################################################################################
         #                                                                              #
@@ -770,15 +811,15 @@ class DRCCfg:
 
         if self.TCNormFactor and not self.TCNormType:
             print("TC->TCNormType: No normalization type supplied.")
-            return 1
+            return False
         if self.TCOutFile and not self.TCOutFileType:
             print("TC->TCOutFileType: No output file type supplied.")
-            return 1
+            return False
         if self.TCWOutFile:
             if not self.TCWOutFileType:
                 print("TC->TCOWFileType: No overwrite file type supplied.")
-                return 1
+                return False
             if self.TCWNormFactor and not self.TCWNormType:
                 print("TC->TCOWNormType: No normalization type supplied.")
-                return 1
-            return 0
+                return False
+        return True

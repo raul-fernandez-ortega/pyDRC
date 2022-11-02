@@ -3,19 +3,22 @@
 #include "baselib_stl.h"
 %}
 %pythoncode %{
+
+import numpy as np
   
 def ReadSignal(FName,InitWindow,ImpulseCenter):
   return _pyDRC.STL_SND_ReadSignal(FName,InitWindow,ImpulseCenter,0,0)
 
 def ReadPoints(CorrFile, MagType, NPoints, SampleRate):
-  Freq = array([],float32)
-  Mag = array([],float32)
-  Phase = array([],float32)
-  Len = pyDRC.FLineCount(CorrFile)
-  return pyDRC.STL_ReadPoints(CorrFile, MagType ,Freq, Mag, Phase, Len, SampleRate)
+  Freq = np.array([],np.float32)
+  Mag = np.array([],np.float32)
+  Phase = np.array([],np.float32)
+  Len = _pyDRC.FLineCount(CorrFile)
+  return _pyDRC.STL_ReadPoints(CorrFile, MagType ,Freq, Mag, Phase, Len, SampleRate)
     
 %}
-%rename(WriteSignal)          SND_WriteSignal;
+%rename(WriteSignal)          SND_WriteSignal(const char * FName,const STLvectorReal Src,const unsigned int WStart,
+					      const unsigned int WLen, const int SampleRate, const IFileType FType);
 %rename(OverwriteSignal)      STL_OverwriteSignal;
 %rename(AutoCorrelation)      STL_AutoCorrelation;
 %rename(CrossCorrelation)     STL_CrossCorrelation;

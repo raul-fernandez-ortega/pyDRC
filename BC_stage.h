@@ -18,16 +18,16 @@ typedef struct
   int       BCInitWindow;
   int       BCPreWindowLen;
   int       BCPreWindowGap;
-  DLReal    BCNormFactor;
-  char *    BCNormType;
-  char *    BCOutFile;
-  char *    BCOutFileType;
   char *    BCDLType;
   DLReal    BCDLMinGain;
   DLReal    BCDLStartFreq;
   DLReal    BCDLEndFreq;
   DLReal    BCDLStart;
   DLReal    BCDLMultExponent;
+  DLReal    NormFactor;
+  char *    NormType;
+  char *    OutFile;
+  char *    OutFileType;
 } BCParmsType;
 
 class BCstage
@@ -46,7 +46,8 @@ class BCstage
   bool ReadImpulseFile(void);
   BCParmsType getCfgParms() { return Cfg; };
   DRCSignal* getOutSig() { return OutSignal; };
-
+  void Normalize(void);
+  void WriteOutput(void);
 };
 
 #endif

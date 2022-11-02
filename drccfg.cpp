@@ -19,16 +19,7 @@
 
 		You can contact the author on Internet at the following address:
 
-				d.sbragion@infotecna.it
-
-		This program uses the parsecfg library from Yuuki  NINOMIYA.  De­
-		tails  on  this  library  can be found in the parsecfg.c and par­
-		secfg.h files.  Many thanks to Yuuki NINOMIYA for this useful li­
-		brary.
-
-		This program uses  also the FFT  routines from  Takuya Ooura and
-		the GNU Scientific  Library (GSL).  Many thanks  to Takuya Ooura
-		and the GSL developers for these efficient routines.
+				d.sbragion@neomerica.it
 
 ****************************************************************************/
 
@@ -39,229 +30,238 @@
 #include "baselib.h"
 #include <stddef.h>
 #include <string.h>
+#include <stdlib.h>
+
+/* Memory leaks debugger */
+#ifdef DebugMLeaks
+	#include "debug_new.h"
+#endif
 
 /* Opzioni di configurazione */
 CfgParmsType Cfg;
 
 /* Definizione struttura file di configurazione */
-cfgStruct CfgParmsDef[] =
+CfgParameter CfgParmsDef[] =
 	{
 		/* Base configuration */
-		{ "BCBaseDir",CFG_STRING,&Cfg.BCBaseDir },
-		{ "BCInFile",CFG_STRING,&Cfg.BCInFile },
-		{ "BCInFileType",CFG_STRING,&Cfg.BCInFileType },
-		{ "BCSampleRate",CFG_INT,&Cfg.BCSampleRate },
-		{ "BCImpulseCenterMode",CFG_STRING,&Cfg.BCImpulseCenterMode },
-		{ "BCImpulseCenter",CFG_INT,&Cfg.BCImpulseCenter },
-		{ "BCInitWindow",CFG_INT,&Cfg.BCInitWindow },
-		{ "BCPreWindowLen",CFG_INT,&Cfg.BCPreWindowLen },
-		{ "BCPreWindowGap",CFG_INT,&Cfg.BCPreWindowGap },
-		{ "BCNormFactor",DRCCfgFloat,&Cfg.BCNormFactor },
-		{ "BCNormType",CFG_STRING,&Cfg.BCNormType },
+		{ (char *) "BCBaseDir",CfgString,&Cfg.BCBaseDir },
+		{ (char *) "BCInFile",CfgString,&Cfg.BCInFile },
+		{ (char *) "BCInFileType",CfgString,&Cfg.BCInFileType },
+		{ (char *) "BCSampleRate",CfgInt,&Cfg.BCSampleRate },
+		{ (char *) "BCImpulseCenterMode",CfgString,&Cfg.BCImpulseCenterMode },
+		{ (char *) "BCImpulseCenter",CfgInt,&Cfg.BCImpulseCenter },
+		{ (char *) "BCInitWindow",CfgInt,&Cfg.BCInitWindow },
+		{ (char *) "BCPreWindowLen",CfgInt,&Cfg.BCPreWindowLen },
+		{ (char *) "BCPreWindowGap",CfgInt,&Cfg.BCPreWindowGap },
+		{ (char *) "BCNormFactor",DRCCfgFloat,&Cfg.BCNormFactor },
+		{ (char *) "BCNormType",CfgString,&Cfg.BCNormType },
+
+    /* Mic correction stage */
+		{ (char *) "MCFilterType",CfgString,&Cfg.MCFilterType },
+		{ (char *) "MCInterpolationType",CfgString,&Cfg.MCInterpolationType },
+		{ (char *) "MCMultExponent",CfgInt,&Cfg.MCMultExponent },
+		{ (char *) "MCFilterLen",CfgInt,&Cfg.MCFilterLen },
+		{ (char *) "MCNumPoints",CfgInt,&Cfg.MCNumPoints },
+		{ (char *) "MCPointsFile",CfgString,&Cfg.MCPointsFile },
+		{ (char *) "MCMagType",CfgString,&Cfg.MCMagType },
+		{ (char *) "MCFilterFile",CfgString,&Cfg.MCFilterFile },
+		{ (char *) "MCFilterFileType",CfgString,&Cfg.MCFilterFileType },
+		{ (char *) "MCOutWindow",CfgInt,&Cfg.MCOutWindow },
+		{ (char *) "MCNormFactor",DRCCfgFloat,&Cfg.MCNormFactor },
+		{ (char *) "MCNormType",CfgString,&Cfg.MCNormType },
+		{ (char *) "MCOutFile",CfgString,&Cfg.MCOutFile },
+		{ (char *) "MCOutFileType",CfgString,&Cfg.MCOutFileType },
 
 		/* Base configuration dip limiting stage */
-		{ "BCDLType",CFG_STRING,&Cfg.BCDLType },
-		{ "BCDLMinGain",DRCCfgFloat,&Cfg.BCDLMinGain },
-		{ "BCDLStartFreq",DRCCfgFloat,&Cfg.BCDLStartFreq },
-		{ "BCDLEndFreq",DRCCfgFloat,&Cfg.BCDLEndFreq },
-		{ "BCDLStart",DRCCfgFloat,&Cfg.BCDLStart },
-		{ "BCDLMultExponent",CFG_INT,&Cfg.BCDLMultExponent },
+		{ (char *) "BCDLType",CfgString,&Cfg.BCDLType },
+		{ (char *) "BCDLMinGain",DRCCfgFloat,&Cfg.BCDLMinGain },
+		{ (char *) "BCDLStartFreq",DRCCfgFloat,&Cfg.BCDLStartFreq },
+		{ (char *) "BCDLEndFreq",DRCCfgFloat,&Cfg.BCDLEndFreq },
+		{ (char *) "BCDLStart",DRCCfgFloat,&Cfg.BCDLStart },
+		{ (char *) "BCDLMultExponent",CfgInt,&Cfg.BCDLMultExponent },
 
 		/* Homomorphic Deconvolution */
-		{ "HDMultExponent",CFG_INT,&Cfg.HDMultExponent },
-		{ "HDMPNormFactor",DRCCfgFloat,&Cfg.HDMPNormFactor },
-		{ "HDMPNormType",CFG_STRING,&Cfg.HDMPNormType },
-		{ "HDMPOutFile",CFG_STRING,&Cfg.HDMPOutFile },
-		{ "HDMPOutFileType",CFG_STRING,&Cfg.HDMPOutFileType },
-		{ "HDEPNormFactor",DRCCfgFloat,&Cfg.HDEPNormFactor },
-		{ "HDEPNormType",CFG_STRING,&Cfg.HDEPNormType },
-		{ "HDEPOutFile",CFG_STRING,&Cfg.HDEPOutFile },
-		{ "HDEPOutFileType",CFG_STRING,&Cfg.HDEPOutFileType },
+		{ (char *) "HDMultExponent",CfgInt,&Cfg.HDMultExponent },
+		{ (char *) "HDMPNormFactor",DRCCfgFloat,&Cfg.HDMPNormFactor },
+		{ (char *) "HDMPNormType",CfgString,&Cfg.HDMPNormType },
+		{ (char *) "HDMPOutFile",CfgString,&Cfg.HDMPOutFile },
+		{ (char *) "HDMPOutFileType",CfgString,&Cfg.HDMPOutFileType },
+		{ (char *) "HDEPNormFactor",DRCCfgFloat,&Cfg.HDEPNormFactor },
+		{ (char *) "HDEPNormType",CfgString,&Cfg.HDEPNormType },
+		{ (char *) "HDEPOutFile",CfgString,&Cfg.HDEPOutFile },
+		{ (char *) "HDEPOutFileType",CfgString,&Cfg.HDEPOutFileType },
 
 		/* Minimum phase prefiltering stage */
-		{ "MPPrefilterType",CFG_STRING,&Cfg.MPPrefilterType },
-		{ "MPPrefilterFctn",CFG_STRING,&Cfg.MPPrefilterFctn },
-		{ "MPWindowGap",CFG_INT,&Cfg.MPWindowGap },
-		{ "MPLowerWindow",CFG_INT,&Cfg.MPLowerWindow },
-		{ "MPUpperWindow",CFG_INT,&Cfg.MPUpperWindow },
-		{ "MPStartFreq",DRCCfgFloat,&Cfg.MPStartFreq },
-		{ "MPEndFreq",DRCCfgFloat,&Cfg.MPEndFreq },
-		{ "MPWindowExponent",DRCCfgFloat,&Cfg.MPWindowExponent },
-		{ "MPFilterLen",CFG_INT,&Cfg.MPFilterLen },
-		{ "MPFSharpness",DRCCfgFloat,&Cfg.MPFSharpness },
-		{ "MPBandSplit",CFG_INT,&Cfg.MPBandSplit },
-		{ "MPHDRecover",CFG_STRING,&Cfg.MPHDRecover },
-		{ "MPEPPreserve",CFG_STRING,&Cfg.MPEPPreserve },
-		{ "MPHDMultExponent",CFG_INT,&Cfg.MPHDMultExponent },
-		{ "MPPFFinalWindow",CFG_INT,&Cfg.MPPFFinalWindow },
-		{ "MPPFNormFactor",DRCCfgFloat,&Cfg.MPPFNormFactor },
-		{ "MPPFNormType",CFG_STRING,&Cfg.MPPFNormType },
-		{ "MPPFOutFile",CFG_STRING,&Cfg.MPPFOutFile },
-		{ "MPPFOutFileType",CFG_STRING,&Cfg.MPPFOutFileType },
+		{ (char *) "MPPrefilterType",CfgString,&Cfg.MPPrefilterType },
+		{ (char *) "MPPrefilterFctn",CfgString,&Cfg.MPPrefilterFctn },
+		{ (char *) "MPWindowGap",CfgInt,&Cfg.MPWindowGap },
+		{ (char *) "MPLowerWindow",CfgInt,&Cfg.MPLowerWindow },
+		{ (char *) "MPUpperWindow",CfgInt,&Cfg.MPUpperWindow },
+		{ (char *) "MPStartFreq",DRCCfgFloat,&Cfg.MPStartFreq },
+		{ (char *) "MPEndFreq",DRCCfgFloat,&Cfg.MPEndFreq },
+		{ (char *) "MPWindowExponent",DRCCfgFloat,&Cfg.MPWindowExponent },
+		{ (char *) "MPFilterLen",CfgInt,&Cfg.MPFilterLen },
+		{ (char *) "MPFSharpness",DRCCfgFloat,&Cfg.MPFSharpness },
+		{ (char *) "MPBandSplit",CfgInt,&Cfg.MPBandSplit },
+		{ (char *) "MPHDRecover",CfgString,&Cfg.MPHDRecover },
+		{ (char *) "MPEPPreserve",CfgString,&Cfg.MPEPPreserve },
+		{ (char *) "MPHDMultExponent",CfgInt,&Cfg.MPHDMultExponent },
+		{ (char *) "MPPFFinalWindow",CfgInt,&Cfg.MPPFFinalWindow },
+		{ (char *) "MPPFNormFactor",DRCCfgFloat,&Cfg.MPPFNormFactor },
+		{ (char *) "MPPFNormType",CfgString,&Cfg.MPPFNormType },
+		{ (char *) "MPPFOutFile",CfgString,&Cfg.MPPFOutFile },
+		{ (char *) "MPPFOutFileType",CfgString,&Cfg.MPPFOutFileType },
 
 		/* Dip limiting stage */
-		{ "DLType",CFG_STRING,&Cfg.DLType },
-		{ "DLMinGain",DRCCfgFloat,&Cfg.DLMinGain },
-		{ "DLStartFreq",DRCCfgFloat,&Cfg.DLStartFreq },
-		{ "DLEndFreq",DRCCfgFloat,&Cfg.DLEndFreq },
-		{ "DLStart",DRCCfgFloat,&Cfg.DLStart },
-		{ "DLMultExponent",CFG_INT,&Cfg.DLMultExponent },
+		{ (char *) "DLType",CfgString,&Cfg.DLType },
+		{ (char *) "DLMinGain",DRCCfgFloat,&Cfg.DLMinGain },
+		{ (char *) "DLStartFreq",DRCCfgFloat,&Cfg.DLStartFreq },
+		{ (char *) "DLEndFreq",DRCCfgFloat,&Cfg.DLEndFreq },
+		{ (char *) "DLStart",DRCCfgFloat,&Cfg.DLStart },
+		{ (char *) "DLMultExponent",CfgInt,&Cfg.DLMultExponent },
 
 		/* Excess fase phase prefiltering stage */
-		{ "EPPrefilterType",CFG_STRING,&Cfg.EPPrefilterType },
-		{ "EPPrefilterFctn",CFG_STRING,&Cfg.EPPrefilterFctn },
-		{ "EPWindowGap",CFG_INT,&Cfg.EPWindowGap },
-		{ "EPLowerWindow",CFG_INT,&Cfg.EPLowerWindow },
-		{ "EPUpperWindow",CFG_INT,&Cfg.EPUpperWindow },
-		{ "EPStartFreq",DRCCfgFloat,&Cfg.EPStartFreq },
-		{ "EPEndFreq",DRCCfgFloat,&Cfg.EPEndFreq },
-		{ "EPWindowExponent",DRCCfgFloat,&Cfg.EPWindowExponent },
-		{ "EPFilterLen",CFG_INT,&Cfg.EPFilterLen },
-		{ "EPFSharpness",DRCCfgFloat,&Cfg.EPFSharpness },
-		{ "EPBandSplit",CFG_INT,&Cfg.EPBandSplit },
-		{ "EPPFFlatGain",DRCCfgFloat,&Cfg.EPPFFlatGain },
-		{ "EPPFOGainFactor",DRCCfgFloat,&Cfg.EPPFOGainFactor },
-		{ "EPPFFlatType",CFG_STRING,&Cfg.EPPFFlatType },
-		{ "EPPFFGMultExponent",CFG_INT,&Cfg.EPPFFGMultExponent },
-		{ "EPPFFinalWindow",CFG_INT,&Cfg.EPPFFinalWindow },
-		{ "EPPFNormFactor",DRCCfgFloat,&Cfg.EPPFNormFactor },
-		{ "EPPFNormType",CFG_STRING,&Cfg.EPPFNormType },
-		{ "EPPFOutFile",CFG_STRING,&Cfg.EPPFOutFile },
-		{ "EPPFOutFileType",CFG_STRING,&Cfg.EPPFOutFileType },
+		{ (char *) "EPPrefilterType",CfgString,&Cfg.EPPrefilterType },
+		{ (char *) "EPPrefilterFctn",CfgString,&Cfg.EPPrefilterFctn },
+		{ (char *) "EPWindowGap",CfgInt,&Cfg.EPWindowGap },
+		{ (char *) "EPLowerWindow",CfgInt,&Cfg.EPLowerWindow },
+		{ (char *) "EPUpperWindow",CfgInt,&Cfg.EPUpperWindow },
+		{ (char *) "EPStartFreq",DRCCfgFloat,&Cfg.EPStartFreq },
+		{ (char *) "EPEndFreq",DRCCfgFloat,&Cfg.EPEndFreq },
+		{ (char *) "EPWindowExponent",DRCCfgFloat,&Cfg.EPWindowExponent },
+		{ (char *) "EPFilterLen",CfgInt,&Cfg.EPFilterLen },
+		{ (char *) "EPFSharpness",DRCCfgFloat,&Cfg.EPFSharpness },
+		{ (char *) "EPBandSplit",CfgInt,&Cfg.EPBandSplit },
+		{ (char *) "EPPFFlatGain",DRCCfgFloat,&Cfg.EPPFFlatGain },
+		{ (char *) "EPPFOGainFactor",DRCCfgFloat,&Cfg.EPPFOGainFactor },
+		{ (char *) "EPPFFlatType",CfgString,&Cfg.EPPFFlatType },
+		{ (char *) "EPPFFGMultExponent",CfgInt,&Cfg.EPPFFGMultExponent },
+		{ (char *) "EPPFFinalWindow",CfgInt,&Cfg.EPPFFinalWindow },
+		{ (char *) "EPPFNormFactor",DRCCfgFloat,&Cfg.EPPFNormFactor },
+		{ (char *) "EPPFNormType",CfgString,&Cfg.EPPFNormType },
+		{ (char *) "EPPFOutFile",CfgString,&Cfg.EPPFOutFile },
+		{ (char *) "EPPFOutFileType",CfgString,&Cfg.EPPFOutFileType },
 
 		/* Prefiltering completion stage */
-		{ "PCOutWindow",CFG_INT,&Cfg.PCOutWindow },
-		{ "PCNormFactor",DRCCfgFloat,&Cfg.PCNormFactor },
-		{ "PCNormType",CFG_STRING,&Cfg.PCNormType },
-		{ "PCOutFile",CFG_STRING,&Cfg.PCOutFile },
-		{ "PCOutFileType",CFG_STRING,&Cfg.PCOutFileType },
+		{ (char *) "PCOutWindow",CfgInt,&Cfg.PCOutWindow },
+		{ (char *) "PCNormFactor",DRCCfgFloat,&Cfg.PCNormFactor },
+		{ (char *) "PCNormType",CfgString,&Cfg.PCNormType },
+		{ (char *) "PCOutFile",CfgString,&Cfg.PCOutFile },
+		{ (char *) "PCOutFileType",CfgString,&Cfg.PCOutFileType },
 
 		/* Inversion stage */
-		{ "ISType",CFG_STRING,&Cfg.ISType },
-		{ "ISPETType",CFG_STRING,&Cfg.ISPETType },
-		{ "ISPrefilterFctn",CFG_STRING,&Cfg.ISPrefilterFctn },
-		{ "ISPELowerWindow",CFG_INT,&Cfg.ISPELowerWindow },
-		{ "ISPEUpperWindow",CFG_INT,&Cfg.ISPEUpperWindow },
-		{ "ISPEStartFreq",CFG_INT,&Cfg.ISPEStartFreq },
-		{ "ISPEEndFreq",CFG_INT,&Cfg.ISPEEndFreq },
-		{ "ISPEFilterLen",CFG_INT,&Cfg.ISPEFilterLen },
-		{ "ISPEFSharpness",DRCCfgFloat,&Cfg.ISPEFSharpness },
-		{ "ISPEBandSplit",CFG_INT,&Cfg.ISPEBandSplit },
-		{ "ISPEWindowExponent",DRCCfgFloat,&Cfg.ISPEWindowExponent },
-		{ "ISPEOGainFactor",DRCCfgFloat,&Cfg.ISPEOGainFactor },
-		{ "ISSMPMultExponent",CFG_INT,&Cfg.ISSMPMultExponent },
-		{ "ISOutWindow",CFG_INT,&Cfg.ISOutWindow },
-		{ "ISNormFactor",DRCCfgFloat,&Cfg.ISNormFactor },
-		{ "ISNormType",CFG_STRING,&Cfg.ISNormType },
-		{ "ISOutFile",CFG_STRING,&Cfg.ISOutFile },
-		{ "ISOutFileType",CFG_STRING,&Cfg.ISOutFileType },
+		{ (char *) "ISType",CfgString,&Cfg.ISType },
+		{ (char *) "ISPETType",CfgString,&Cfg.ISPETType },
+		{ (char *) "ISPrefilterFctn",CfgString,&Cfg.ISPrefilterFctn },
+		{ (char *) "ISPELowerWindow",CfgInt,&Cfg.ISPELowerWindow },
+		{ (char *) "ISPEUpperWindow",CfgInt,&Cfg.ISPEUpperWindow },
+		{ (char *) "ISPEStartFreq",CfgInt,&Cfg.ISPEStartFreq },
+		{ (char *) "ISPEEndFreq",CfgInt,&Cfg.ISPEEndFreq },
+		{ (char *) "ISPEFilterLen",CfgInt,&Cfg.ISPEFilterLen },
+		{ (char *) "ISPEFSharpness",DRCCfgFloat,&Cfg.ISPEFSharpness },
+		{ (char *) "ISPEBandSplit",CfgInt,&Cfg.ISPEBandSplit },
+		{ (char *) "ISPEWindowExponent",DRCCfgFloat,&Cfg.ISPEWindowExponent },
+		{ (char *) "ISPEOGainFactor",DRCCfgFloat,&Cfg.ISPEOGainFactor },
+		{ (char *) "ISSMPMultExponent",CfgInt,&Cfg.ISSMPMultExponent },
+		{ (char *) "ISOutWindow",CfgInt,&Cfg.ISOutWindow },
+		{ (char *) "ISNormFactor",DRCCfgFloat,&Cfg.ISNormFactor },
+		{ (char *) "ISNormType",CfgString,&Cfg.ISNormType },
+		{ (char *) "ISOutFile",CfgString,&Cfg.ISOutFile },
+		{ (char *) "ISOutFileType",CfgString,&Cfg.ISOutFileType },
 
 		/* Psychoacoustic target stage */
-		{ "PTType",CFG_STRING,&Cfg.PTType },
-		{ "PTReferenceWindow",CFG_INT,&Cfg.PTReferenceWindow },
-		{ "PTDLType",CFG_STRING,&Cfg.PTDLType },
-		{ "PTDLMinGain",DRCCfgFloat,&Cfg.PTDLMinGain },
-		{ "PTDLStart",DRCCfgFloat,&Cfg.PTDLStart },
-		{ "PTDLStartFreq",DRCCfgFloat,&Cfg.PTDLStartFreq },
-		{ "PTDLEndFreq",DRCCfgFloat,&Cfg.PTDLEndFreq },
-		{ "PTDLMultExponent",CFG_INT,&Cfg.PTDLMultExponent },
-		{ "PTBandWidth",DRCCfgFloat,&Cfg.PTBandWidth },
-		{ "PTPeakDetectionStrength",DRCCfgFloat,&Cfg.PTPeakDetectionStrength },
-		{ "PTMultExponent",CFG_INT,&Cfg.PTMultExponent },
-		{ "PTFilterLen",CFG_INT,&Cfg.PTFilterLen },
-		{ "PTFilterFile",CFG_STRING,&Cfg.PTFilterFile },
-		{ "PTFilterFileType",CFG_STRING,&Cfg.PTFilterFileType },
-		{ "PTNormFactor",DRCCfgFloat,&Cfg.PTNormFactor },
-		{ "PTNormType",CFG_STRING,&Cfg.PTNormType },
-		{ "PTOutFile",CFG_STRING,&Cfg.PTOutFile },
-		{ "PTOutFileType",CFG_STRING,&Cfg.PTOutFileType },
-		{ "PTOutWindow",CFG_INT,&Cfg.PTOutWindow },
+		{ (char *) "PTType",CfgString,&Cfg.PTType },
+		{ (char *) "PTReferenceWindow",CfgInt,&Cfg.PTReferenceWindow },
+		{ (char *) "PTDLType",CfgString,&Cfg.PTDLType },
+		{ (char *) "PTDLMinGain",DRCCfgFloat,&Cfg.PTDLMinGain },
+		{ (char *) "PTDLStart",DRCCfgFloat,&Cfg.PTDLStart },
+		{ (char *) "PTDLStartFreq",DRCCfgFloat,&Cfg.PTDLStartFreq },
+		{ (char *) "PTDLEndFreq",DRCCfgFloat,&Cfg.PTDLEndFreq },
+		{ (char *) "PTDLMultExponent",CfgInt,&Cfg.PTDLMultExponent },
+		{ (char *) "PTBandWidth",DRCCfgFloat,&Cfg.PTBandWidth },
+		{ (char *) "PTPeakDetectionStrength",DRCCfgFloat,&Cfg.PTPeakDetectionStrength },
+		{ (char *) "PTMultExponent",CfgInt,&Cfg.PTMultExponent },
+		{ (char *) "PTFilterLen",CfgInt,&Cfg.PTFilterLen },
+		{ (char *) "PTFilterFile",CfgString,&Cfg.PTFilterFile },
+		{ (char *) "PTFilterFileType",CfgString,&Cfg.PTFilterFileType },
+		{ (char *) "PTNormFactor",DRCCfgFloat,&Cfg.PTNormFactor },
+		{ (char *) "PTNormType",CfgString,&Cfg.PTNormType },
+		{ (char *) "PTOutFile",CfgString,&Cfg.PTOutFile },
+		{ (char *) "PTOutFileType",CfgString,&Cfg.PTOutFileType },
+		{ (char *) "PTOutWindow",CfgInt,&Cfg.PTOutWindow },
 
 		/* Peak limiting stage */
-		{ "PLType",CFG_STRING,&Cfg.PLType },
-		{ "PLMaxGain",DRCCfgFloat,&Cfg.PLMaxGain },
-		{ "PLStart",DRCCfgFloat,&Cfg.PLStart },
-		{ "PLStartFreq",DRCCfgFloat,&Cfg.PLStartFreq },
-		{ "PLEndFreq",DRCCfgFloat,&Cfg.PLEndFreq },
-		{ "PLMultExponent",CFG_INT,&Cfg.PLMultExponent },
-		{ "PLOutWindow",CFG_INT,&Cfg.PLOutWindow },
-		{ "PLNormFactor",DRCCfgFloat,&Cfg.PLNormFactor },
-		{ "PLNormType",CFG_STRING,&Cfg.PLNormType },
-		{ "PLOutFile",CFG_STRING,&Cfg.PLOutFile },
-		{ "PLOutFileType",CFG_STRING,&Cfg.PLOutFileType },
+		{ (char *) "PLType",CfgString,&Cfg.PLType },
+		{ (char *) "PLMaxGain",DRCCfgFloat,&Cfg.PLMaxGain },
+		{ (char *) "PLStart",DRCCfgFloat,&Cfg.PLStart },
+		{ (char *) "PLStartFreq",DRCCfgFloat,&Cfg.PLStartFreq },
+		{ (char *) "PLEndFreq",DRCCfgFloat,&Cfg.PLEndFreq },
+		{ (char *) "PLMultExponent",CfgInt,&Cfg.PLMultExponent },
+		{ (char *) "PLOutWindow",CfgInt,&Cfg.PLOutWindow },
+		{ (char *) "PLNormFactor",DRCCfgFloat,&Cfg.PLNormFactor },
+		{ (char *) "PLNormType",CfgString,&Cfg.PLNormType },
+		{ (char *) "PLOutFile",CfgString,&Cfg.PLOutFile },
+		{ (char *) "PLOutFileType",CfgString,&Cfg.PLOutFileType },
 
 		/* Ringing truncation stage */
-		{ "RTType",CFG_STRING,&Cfg.RTType },
-		{ "RTPrefilterFctn",CFG_STRING,&Cfg.RTPrefilterFctn },
-		{ "RTWindowGap",CFG_INT,&Cfg.RTWindowGap },
-		{ "RTLowerWindow",CFG_INT,&Cfg.RTLowerWindow },
-		{ "RTUpperWindow",CFG_INT,&Cfg.RTUpperWindow },
-		{ "RTStartFreq",DRCCfgFloat,&Cfg.RTStartFreq },
-		{ "RTEndFreq",DRCCfgFloat,&Cfg.RTEndFreq },
-		{ "RTWindowExponent",DRCCfgFloat,&Cfg.RTWindowExponent },
-		{ "RTFilterLen",CFG_INT,&Cfg.RTFilterLen },
-		{ "RTFSharpness",DRCCfgFloat,&Cfg.RTFSharpness },
-		{ "RTBandSplit",CFG_INT,&Cfg.RTBandSplit },
-		{ "RTOutWindow",CFG_INT,&Cfg.RTOutWindow },
-		{ "RTNormFactor",DRCCfgFloat,&Cfg.RTNormFactor },
-		{ "RTNormType",CFG_STRING,&Cfg.RTNormType },
-		{ "RTOutFile",CFG_STRING,&Cfg.RTOutFile },
-		{ "RTOutFileType",CFG_STRING,&Cfg.RTOutFileType },
+		{ (char *) "RTType",CfgString,&Cfg.RTType },
+		{ (char *) "RTPrefilterFctn",CfgString,&Cfg.RTPrefilterFctn },
+		{ (char *) "RTWindowGap",CfgInt,&Cfg.RTWindowGap },
+		{ (char *) "RTLowerWindow",CfgInt,&Cfg.RTLowerWindow },
+		{ (char *) "RTUpperWindow",CfgInt,&Cfg.RTUpperWindow },
+		{ (char *) "RTStartFreq",DRCCfgFloat,&Cfg.RTStartFreq },
+		{ (char *) "RTEndFreq",DRCCfgFloat,&Cfg.RTEndFreq },
+		{ (char *) "RTWindowExponent",DRCCfgFloat,&Cfg.RTWindowExponent },
+		{ (char *) "RTFilterLen",CfgInt,&Cfg.RTFilterLen },
+		{ (char *) "RTFSharpness",DRCCfgFloat,&Cfg.RTFSharpness },
+		{ (char *) "RTBandSplit",CfgInt,&Cfg.RTBandSplit },
+		{ (char *) "RTOutWindow",CfgInt,&Cfg.RTOutWindow },
+		{ (char *) "RTNormFactor",DRCCfgFloat,&Cfg.RTNormFactor },
+		{ (char *) "RTNormType",CfgString,&Cfg.RTNormType },
+		{ (char *) "RTOutFile",CfgString,&Cfg.RTOutFile },
+		{ (char *) "RTOutFileType",CfgString,&Cfg.RTOutFileType },
 
 		/* Target response stage */
-		{ "PSFilterType",CFG_STRING,&Cfg.PSFilterType },
-		{ "PSInterpolationType",CFG_STRING,&Cfg.PSInterpolationType },
-		{ "PSMultExponent",CFG_INT,&Cfg.PSMultExponent },
-		{ "PSFilterLen",CFG_INT,&Cfg.PSFilterLen },
-		{ "PSNumPoints",CFG_INT,&Cfg.PSNumPoints },
-		{ "PSPointsFile",CFG_STRING,&Cfg.PSPointsFile },
-		{ "PSMagType",CFG_STRING,&Cfg.PSMagType },
-		{ "PSOutWindow",CFG_INT,&Cfg.PSOutWindow },
-		{ "PSNormFactor",DRCCfgFloat,&Cfg.PSNormFactor },
-		{ "PSNormType",CFG_STRING,&Cfg.PSNormType },
-		{ "PSOutFile",CFG_STRING,&Cfg.PSOutFile },
-		{ "PSOutFileType",CFG_STRING,&Cfg.PSOutFileType },
-
-		/* Mic correction stage */
-		{ "MCFilterType",CFG_STRING,&Cfg.MCFilterType },
-		{ "MCInterpolationType",CFG_STRING,&Cfg.MCInterpolationType },
-		{ "MCMultExponent",CFG_INT,&Cfg.MCMultExponent },
-		{ "MCFilterLen",CFG_INT,&Cfg.MCFilterLen },
-		{ "MCNumPoints",CFG_INT,&Cfg.MCNumPoints },
-		{ "MCPointsFile",CFG_STRING,&Cfg.MCPointsFile },
-		{ "MCMagType",CFG_STRING,&Cfg.MCMagType },
-		{ "MCOutWindow",CFG_INT,&Cfg.MCOutWindow },
-		{ "MCNormFactor",DRCCfgFloat,&Cfg.MCNormFactor },
-		{ "MCNormType",CFG_STRING,&Cfg.MCNormType },
-		{ "MCOutFile",CFG_STRING,&Cfg.MCOutFile },
-		{ "MCOutFileType",CFG_STRING,&Cfg.MCOutFileType },
+		{ (char *) "PSFilterType",CfgString,&Cfg.PSFilterType },
+		{ (char *) "PSInterpolationType",CfgString,&Cfg.PSInterpolationType },
+		{ (char *) "PSMultExponent",CfgInt,&Cfg.PSMultExponent },
+		{ (char *) "PSFilterLen",CfgInt,&Cfg.PSFilterLen },
+		{ (char *) "PSNumPoints",CfgInt,&Cfg.PSNumPoints },
+		{ (char *) "PSPointsFile",CfgString,&Cfg.PSPointsFile },
+		{ (char *) "PSMagType",CfgString,&Cfg.PSMagType },
+		{ (char *) "PSOutWindow",CfgInt,&Cfg.PSOutWindow },
+		{ (char *) "PSNormFactor",DRCCfgFloat,&Cfg.PSNormFactor },
+		{ (char *) "PSNormType",CfgString,&Cfg.PSNormType },
+		{ (char *) "PSOutFile",CfgString,&Cfg.PSOutFile },
+		{ (char *) "PSOutFileType",CfgString,&Cfg.PSOutFileType },
 
 		/* Minimum phase filter extraction stage */
-		{ "MSMultExponent",CFG_INT,&Cfg.MSMultExponent },
-		{ "MSOutWindow",CFG_INT,&Cfg.MSOutWindow },
-		{ "MSNormFactor",DRCCfgFloat,&Cfg.MSNormFactor },
-		{ "MSNormType",CFG_STRING,&Cfg.MSNormType },
-		{ "MSOutFile",CFG_STRING,&Cfg.MSOutFile },
-		{ "MSOutFileType",CFG_STRING,&Cfg.MSOutFileType },
+		{ (char *) "MSMultExponent",CfgInt,&Cfg.MSMultExponent },
+		{ (char *) "MSOutWindow",CfgInt,&Cfg.MSOutWindow },
+		{ (char *) "MSFilterDelay",CfgInt,&Cfg.MSFilterDelay },
+		{ (char *) "MSNormFactor",DRCCfgFloat,&Cfg.MSNormFactor },
+		{ (char *) "MSNormType",CfgString,&Cfg.MSNormType },
+		{ (char *) "MSOutFile",CfgString,&Cfg.MSOutFile },
+		{ (char *) "MSOutFileType",CfgString,&Cfg.MSOutFileType },
 
 		/* Test convolution stage */
-		{ "TCNormFactor",DRCCfgFloat,&Cfg.TCNormFactor },
-		{ "TCNormType",CFG_STRING,&Cfg.TCNormType },
-		{ "TCOutFile",CFG_STRING,&Cfg.TCOutFile },
-		{ "TCOutFileType",CFG_STRING,&Cfg.TCOutFileType },
-		{ "TCOWFile",CFG_STRING,&Cfg.TCOWFile },
-		{ "TCOWFileType",CFG_STRING,&Cfg.TCOWFileType },
-		{ "TCOWNormFactor",DRCCfgFloat,&Cfg.TCOWNormFactor },
-		{ "TCOWNormType",CFG_STRING,&Cfg.TCOWNormType },
-		{ "TCOWSkip",CFG_INT,&Cfg.TCOWSkip },
-		{ "TCOWPrewindow",CFG_INT,&Cfg.TCOWPrewindow },
-		{ "TCOWLength",CFG_INT,&Cfg.TCOWLength },
+		{ (char *) "TCNormFactor",DRCCfgFloat,&Cfg.TCNormFactor },
+		{ (char *) "TCNormType",CfgString,&Cfg.TCNormType },
+		{ (char *) "TCOutFile",CfgString,&Cfg.TCOutFile },
+		{ (char *) "TCOutFileType",CfgString,&Cfg.TCOutFileType },
+		{ (char *) "TCOWFile",CfgString,&Cfg.TCOWFile },
+		{ (char *) "TCOWFileType",CfgString,&Cfg.TCOWFileType },
+		{ (char *) "TCOWNormFactor",DRCCfgFloat,&Cfg.TCOWNormFactor },
+		{ (char *) "TCOWNormType",CfgString,&Cfg.TCOWNormType },
+		{ (char *) "TCOWSkip",CfgInt,&Cfg.TCOWSkip },
+		{ (char *) "TCOWPrewindow",CfgInt,&Cfg.TCOWPrewindow },
+		{ (char *) "TCOWLength",CfgInt,&Cfg.TCOWLength },
 
 		/* Chiusura lista parametri */
-		{NULL, CFG_END, NULL}
+		{NULL, CfgEnd, NULL}
 	};
 
-/* Elenco dei parametri di configurazione che richiedo gestione della
+/* Elenco dei parametri di configurazione che richiedono gestione della
 directory base */
 static const char * BaseDirParmsList[] =
 	{
@@ -298,12 +298,12 @@ static char * StrJoin(const char * S1, const char * S2)
 	}
 
 /* Ritorna la posizione del parametro indicato */
-static int GetCfgParmPos(const cfgStruct * CfgParmsDef, const char * ParmName)
+static int GetCfgParmPos(const CfgParameter * CfgParmsDef, const char * ParmName)
 	{
 		int P = 0;
-		while (CfgParmsDef[P].type != CFG_END)
+		while (CfgParmsDef[P].PType != CfgEnd)
 			{
-				if (strcmp(CfgParmsDef[P].parameterName,ParmName) == 0)
+				if (strcmp(CfgParmsDef[P].PName,ParmName) == 0)
 					return P;
 				P++;
 			}
@@ -311,7 +311,7 @@ static int GetCfgParmPos(const cfgStruct * CfgParmsDef, const char * ParmName)
 	}
 
 /* Impostazione directory base di lavoro */
-int SetupDRCCfgBaseDir(CfgParmsType * DRCCfg, const cfgStruct * CfgParmsDef,
+int SetupDRCCfgBaseDir(CfgParmsType * DRCCfg, const CfgParameter * CfgParmsDef,
 	const CmdLineType * OptData)
 	{
 		/* Parametro corrente */
@@ -340,21 +340,21 @@ int SetupDRCCfgBaseDir(CfgParmsType * DRCCfg, const cfgStruct * CfgParmsDef,
 				a linea di comando */
 				if ((OptData->ParmSet[P] == False ||
 					OptData->ParmSet[BCBaseDirParmPos] == True) &&
-					(*((void **) CfgParmsDef[P].value) != NULL))
+					(*((void **) CfgParmsDef[P].PValue) != NULL))
 					{
 						/* Aggiunge la directory base al parametro */
 						S = StrJoin(DRCCfg->BCBaseDir,
-							(char *) (* ((void **) CfgParmsDef[P].value)));
+							(char *) (* ((void **) CfgParmsDef[P].PValue)));
 
 						/* Verifica che la concatenazione sia riuscita */
 						if (S == NULL)
 							return 1;
 
 						/* Dealloca la stringa precedente */
-						free(*((void **) CfgParmsDef[P].value));
+						free(*((void **) CfgParmsDef[P].PValue));
 
 						/* Sostituisce la stringa precedente */
-						*((void **) CfgParmsDef[P].value) = (void *) S;
+						*((void **) CfgParmsDef[P].PValue) = (void *) S;
 					}
 
 				/* Passa al parametro successivo */
@@ -370,9 +370,13 @@ int CheckDRCCfg(const CfgParmsType * DRCCfg)
 	{
 		/* Calcolo finestra validazione parametri */
 		int PWLen;
+		int IWLen;
 
 		/* Stringa temporanea errori */
 		char TStr[256];
+
+		/* Calcolo dimensione massima target psicoacustico */
+		int PTLen;
 
 		/*********************************************************************************/
 		/* Importazione iniziale risposta all'impulso */
@@ -415,6 +419,108 @@ int CheckDRCCfg(const CfgParmsType * DRCCfg)
 					return 1;
 				}
 
+    /*********************************************************************************/
+		/* Compensazione microfono */
+		/*********************************************************************************/
+
+		if (DRCCfg->MCFilterType == NULL)
+			{
+				sputs("MC->MCFilterType: No filter type supplied.");
+				return 1;
+			}
+    if (DRCCfg->MCFilterType[0] != 'N')
+      {
+        if (DRCCfg->MCFilterType[0] != 'L' && DRCCfg->MCFilterType[0] != 'M'
+          && DRCCfg->MCFilterType[0] != 'N')
+          {
+            sputs("MC->MCFilterType: Invalid filter type supplied.");
+            return 1;
+          }
+        if (DRCCfg->MCInterpolationType == NULL)
+          {
+            sputs("MC->MCInterpolationType: No interpolation type supplied.");
+            return 1;
+          }
+        if (DRCCfg->MCInterpolationType[0] != 'L' && DRCCfg->MCInterpolationType[0] != 'G'
+          && DRCCfg->MCInterpolationType[0] != 'R' && DRCCfg->MCInterpolationType[0] != 'S'
+          && DRCCfg->MCInterpolationType[0] != 'P' && DRCCfg->MCInterpolationType[0] != 'H')
+          {
+            sputs("MC->MCInterpolationType: Invalid interpolation type supplied.");
+            return 1;
+          }
+        if (DRCCfg->MCMagType == NULL)
+          {
+            sputs("MC->MCMagType: No filter definition magnitude type supplied.");
+            return 1;
+          }
+        if (DRCCfg->MCMagType[0] != 'L' && DRCCfg->MCMagType[0] != 'D')
+          {
+            sputs("MC->MCMagType: Invalid filter definition magnitude type supplied.");
+            return 1;
+          }
+        if (DRCCfg->MCPointsFile == NULL)
+          {
+            sputs("MC->MCPointsFile: No correction point file supplied.");
+            return 1;
+          }
+        if (DRCCfg->MCNumPoints < 0 || DRCCfg->MCNumPoints == 1)
+          {
+            sputs("MC->MCNumPoints: Invalid MCNumPoints supplied, it must be 0 or at least 2.");
+            return 1;
+          }
+        if (DRCCfg->MCFilterFile != NULL && DRCCfg->MCFilterFileType == NULL)
+          {
+            sputs("MC->MCFilterFileType: No MCFilterFileType supplied.");
+            return 1;
+          }
+        if (DRCCfg->MCNormFactor > 0 && DRCCfg->MCNormType == NULL)
+          {
+            sputs("MC->MCNormType: No normalization type supplied.");
+            return 1;
+          }
+        if (DRCCfg->MCOutFile != NULL && DRCCfg->MCOutFileType == NULL)
+          {
+            sputs("MC->MCOutFileType: No output file type supplied.");
+            return 1;
+          }
+        if (DRCCfg->MCFilterLen <= 0)
+          {
+            sputs("MC->MCFilterLen: MCFilterLen must be greater than 0.");
+            return 1;
+          }
+        switch (DRCCfg->MCFilterType[0])
+          {
+            case 'L':
+              if (DRCCfg->MCOutWindow > DRCCfg->BCInitWindow + DRCCfg->MCFilterLen - 1)
+                {
+                  sprintf(TStr,"%d.",DRCCfg->BCInitWindow + DRCCfg->MCFilterLen - 1);
+                  sputsp("MC->MCOutWindow: MCOutWindow too big. Max allowed value: ", TStr);
+                  return 1;
+                }
+
+              if (DRCCfg->MCOutWindow > 0)
+                IWLen = DRCCfg->MCOutWindow;
+              else
+                IWLen = DRCCfg->BCInitWindow + DRCCfg->MCFilterLen - 1;
+            break;
+            case 'M':
+              if (DRCCfg->MCOutWindow > DRCCfg->BCInitWindow)
+                {
+                  sprintf(TStr,"%d.",DRCCfg->BCInitWindow);
+                  sputsp("MC->MCOutWindow: MCOutWindow too big. Max allowed value: ", TStr);
+                  return 1;
+                }
+
+              if (DRCCfg->MCOutWindow > 0)
+                IWLen = DRCCfg->MCOutWindow;
+              else
+                IWLen = DRCCfg->BCInitWindow;
+            break;
+          }
+      }
+    else
+      IWLen = DRCCfg->BCInitWindow;
+
 		/*********************************************************************************/
 		/* Base configuration dip limiting */
 		/*********************************************************************************/
@@ -424,7 +530,8 @@ int CheckDRCCfg(const CfgParmsType * DRCCfg)
 				sputs("BC->BCDLType: No BCDLType supplied.");
 				return 1;
 			}
-		if (DRCCfg->BCDLType[0] != 'L' && DRCCfg->BCDLType[0] != 'M')
+		if (DRCCfg->BCDLType[0] != 'L' && DRCCfg->BCDLType[0] != 'M'
+				&& DRCCfg->BCDLType[0] != 'P' && DRCCfg->BCDLType[0] != 'W')
 			{
 				sputs("BC->BCDLType: Invalid dip limiting type supplied.");
 				return 1;
@@ -495,9 +602,10 @@ int CheckDRCCfg(const CfgParmsType * DRCCfg)
 				sputs("MP->MPLowerWindow: No MPLowerWindow supplied.");
 				return 1;
 			}
-		if (DRCCfg->MPLowerWindow > 2 * DRCCfg->BCInitWindow)
+		if (DRCCfg->MPLowerWindow > IWLen)
 			{
-				sputs("MP->MPLowerWindow: MPLowerWindow can't be greater than 2 * BCInitWindow.");
+        sprintf(TStr,"%d.",IWLen);
+        sputsp("MP->MPLowerWindow: MPLowerWindow too big. Max allowed value: ", TStr);
 				return 1;
 			}
 		if (DRCCfg->MPUpperWindow <= 0)
@@ -510,9 +618,9 @@ int CheckDRCCfg(const CfgParmsType * DRCCfg)
 				sputs("MP->MPFSharpness: MPFSharpness must be greater than 0.");
 				return 1;
 			}
-		if (DRCCfg->MPUpperWindow > 2 * DRCCfg->BCInitWindow)
+		if (DRCCfg->MPUpperWindow > DRCCfg->MPLowerWindow)
 			{
-				sputs("MP->MPUpperWindow: MPUpperWindow can't be greater than 2 * BCInitWindow.");
+				sputs("MP->MPUpperWindow: MPUpperWindow can't be greater than MPLowerWindow.");
 				return 1;
 			}
 		if (DRCCfg->MPWindowExponent <= (DLReal) 0.0)
@@ -559,7 +667,8 @@ int CheckDRCCfg(const CfgParmsType * DRCCfg)
 				sputs("DL->DLType: No DLType supplied.");
 				return 1;
 			}
-		if (DRCCfg->DLType[0] != 'L' && DRCCfg->DLType[0] != 'M')
+		if (DRCCfg->DLType[0] != 'L' && DRCCfg->DLType[0] != 'M'
+				&& DRCCfg->DLType[0] != 'P' && DRCCfg->DLType[0] != 'W')
 			{
 				sputs("DL->DLType: Invalid dip limiting type supplied.");
 				return 1;
@@ -605,9 +714,10 @@ int CheckDRCCfg(const CfgParmsType * DRCCfg)
 				sputs("EP->EPLowerWindow: EPLowerWindow must be greater than 0.");
 				return 1;
 			}
-		if (DRCCfg->EPLowerWindow > 2 * DRCCfg->BCInitWindow)
+		if (DRCCfg->EPLowerWindow > IWLen)
 			{
-				sputs("EP->EPLowerWindow: EPLowerWindow can't be greater than 2 * BCInitWindow.");
+        sprintf(TStr,"%d.",IWLen);
+        sputsp("EP->EPLowerWindow: EPLowerWindow  too big. Max allowed value: ", TStr);
 				return 1;
 			}
 		if (DRCCfg->EPUpperWindow <= 0)
@@ -615,9 +725,9 @@ int CheckDRCCfg(const CfgParmsType * DRCCfg)
 				sputs("EP->EPUpperWindow: EPUpperWindow must be greater than 0.");
 				return 1;
 			}
-		if (DRCCfg->EPUpperWindow > 2 * DRCCfg->BCInitWindow)
+		if (DRCCfg->EPUpperWindow > DRCCfg->EPLowerWindow)
 			{
-				sputs("EP->EPUpperWindow: EPUpperWindow can't be greater than 2 * BCInitWindow.");
+				sputs("EP->EPUpperWindow: EPUpperWindow can't be greater than EPLowerWindow.");
 				return 1;
 			}
 		if (DRCCfg->EPFSharpness <= (DLReal) 0.0)
@@ -721,6 +831,11 @@ int CheckDRCCfg(const CfgParmsType * DRCCfg)
 				sputs("IS->ISPrefilterFctn: Invalid ISPrefilterFctn supplied.");
 				return 1;
 			}
+		if (DRCCfg->ISPEUpperWindow >= DRCCfg->ISPELowerWindow)
+			{
+				sputs("IS->ISPEUpperWindow: ISPELowerWindow must be greater than ISPEUpperWindow.");
+				return 1;
+			}
 		if (DRCCfg->ISPEFSharpness <= (DLReal) 0.0)
 			{
 				sputs("IS->ISPEFSharpness: ISPEFSharpness must be greater than 0.");
@@ -739,17 +854,6 @@ int CheckDRCCfg(const CfgParmsType * DRCCfg)
 		if (DRCCfg->ISOutWindow < 0)
 			{
 				sputs("IS->ISOutWindow: ISOutWindow must be greater than 0.");
-				return 1;
-			}
-		if (DRCCfg->ISType[0] == 'L' && DRCCfg->ISOutWindow > DRCCfg->PCOutWindow)
-			{
-				sputs("IS->ISOutWindow: ISOutWindow can't be greater than PCOutWindow.");
-				return 1;
-			}
-		if (DRCCfg->ISType[0] == 'T' && DRCCfg->ISOutWindow > PWLen)
-			{
-				sprintf(TStr,"%d.",PWLen);
-				sputsp("IS->ISOutWindow: ISOutWindow too big. Max allowed value: ", TStr);
 				return 1;
 			}
 		if (DRCCfg->ISOutWindow > 0)
@@ -786,7 +890,8 @@ int CheckDRCCfg(const CfgParmsType * DRCCfg)
 						sputs("PT->PTDLType: No DLType supplied.");
 						return 1;
 					}
-				if (DRCCfg->PTDLType[0] != 'L' && DRCCfg->PTDLType[0] != 'M')
+				if (DRCCfg->PTDLType[0] != 'L' && DRCCfg->PTDLType[0] != 'M'
+						&& DRCCfg->PTDLType[0] != 'P' && DRCCfg->PTDLType[0] != 'W')
 					{
 						sputs("PT->PTDLType: Invalid dip limiting type supplied.");
 						return 1;
@@ -801,9 +906,19 @@ int CheckDRCCfg(const CfgParmsType * DRCCfg)
 						sputs("PT->PTFilterLen: PTFilterLen must be greater than 0.");
 						return 1;
 					}
-				if (DRCCfg->PTFilterLen > 2 * (DRCCfg->BCInitWindow + PWLen - 1))
+				/* Calcola la lunghezza del target psicoacustico */
+				if (DRCCfg->PTDLMultExponent >= 0)
 					{
-						sprintf(TStr,"%d.",2 * (DRCCfg->BCInitWindow + PWLen - 1));
+						/* Calcola la potenza di due superiore a N */
+						for (PTLen = 1;PTLen <= DRCCfg->PTReferenceWindow;PTLen <<= 1);
+						PTLen *= 1 << DRCCfg->PTDLMultExponent;
+					}
+				else
+					PTLen = DRCCfg->PTReferenceWindow;
+				PTLen *= 2;
+				if (DRCCfg->PTFilterLen > PTLen)
+					{
+						sprintf(TStr,"%d.",PTLen);
 						sputsp("PT->PTFilterLen: PTFilterLen too big. Max allowed value: ", TStr);
 						return 1;
 					}
@@ -843,14 +958,16 @@ int CheckDRCCfg(const CfgParmsType * DRCCfg)
 						break;
 
 						case 'M':
-							if (DRCCfg->PTOutWindow > PWLen)
+							if (DRCCfg->PTOutWindow > PWLen + 2 * (DRCCfg->PTFilterLen - 1))
 								{
-									sprintf(TStr,"%d.",PWLen);
+									sprintf(TStr,"%d.",PWLen + 2 * (DRCCfg->PTFilterLen - 1));
 									sputsp("PT->PTOutWindow: PTOutWindow too big. Max value allowed: ",TStr);
 									return 1;
 								}
 							if (DRCCfg->PTOutWindow > 0)
 								PWLen = DRCCfg->PTOutWindow;
+							else
+								PWLen = PWLen + DRCCfg->PTFilterLen - 1;
 						break;
 					}
 			}
@@ -864,7 +981,8 @@ int CheckDRCCfg(const CfgParmsType * DRCCfg)
 				sputs("PL->PLType: No peak limiting type supplied.");
 				return 1;
 			}
-		if (DRCCfg->PLType[0] != 'L' && DRCCfg->PLType[0] != 'M')
+		if (DRCCfg->PLType[0] != 'L' && DRCCfg->PLType[0] != 'M'
+				&& DRCCfg->PLType[0] != 'P' && DRCCfg->PLType[0] != 'W')
 			{
 				sputs("PL->PLType: Invalid peak limiting type supplied.");
 				return 1;
@@ -908,72 +1026,75 @@ int CheckDRCCfg(const CfgParmsType * DRCCfg)
 				sputs("RT->RTType: Invalid RTType supplied.");
 				return 1;
 			}
-		if (DRCCfg->RTPrefilterFctn == NULL)
+		if (DRCCfg->RTType[0] != 'N')
 			{
-				sputs("RT->RTPrefilterFctn: No RTPrefilterFctn supplied.");
-				return 1;
+				if (DRCCfg->RTPrefilterFctn == NULL)
+					{
+						sputs("RT->RTPrefilterFctn: No RTPrefilterFctn supplied.");
+						return 1;
+					}
+				if (DRCCfg->RTPrefilterFctn[0] != 'P' && DRCCfg->RTPrefilterFctn[0] != 'B')
+					{
+						sputs("RT->RTPrefilterFctn: Invalid RTPrefilterFctn supplied.");
+						return 1;
+					}
+				if (DRCCfg->RTWindowGap < 0)
+					{
+						sputs("RT->RTWindowGap: RTWindowGap must be greater or equal to 0.");
+						return 1;
+					}
+				if (DRCCfg->RTLowerWindow <= 0)
+					{
+						sputs("RT->RTLowerWindow: RTLowerWindow must be greater than 0.");
+						return 1;
+					}
+				if (DRCCfg->RTLowerWindow > PWLen)
+					{
+						sprintf(TStr,"%d.",PWLen);
+						sputsp("RT->RTLowerWindow: RTLowerWindow too big. Max allowed value: ", TStr);
+						return 1;
+					}
+				if (DRCCfg->RTUpperWindow <= 0)
+					{
+						sputs("RT->RTUpperWindow: RTUpperWindow must be greater than 0.");
+						return 1;
+					}
+				if (DRCCfg->RTFSharpness <= (DLReal) 0.0)
+					{
+						sputs("RT->RTFSharpness: RTFSharpness must be greater than 0.");
+						return 1;
+					}
+				if (DRCCfg->RTUpperWindow > PWLen)
+					{
+						sprintf(TStr,"%d.",PWLen);
+						sputsp("RT->RTUpperWindow: RTUpperWindow too big. Max allowed value: ", TStr);
+						return 1;
+					}
+				if (DRCCfg->RTWindowExponent <= (DLReal) 0.0)
+					{
+						sputs("RT->RTWindowExponent: RTWindowExponent must be greater than 0.");
+						return 1;
+					}
+				if (DRCCfg->RTNormFactor > 0 && DRCCfg->RTNormType == NULL)
+					{
+						sputs("RT->RTNormType: No RT normalization type supplied.");
+						return 1;
+					}
+				if (DRCCfg->RTOutFile != NULL && DRCCfg->RTOutFileType == NULL)
+					{
+						sputs("RT->RTOutFileType: No RT output file type supplied.");
+						return 1;
+					}
+				if (DRCCfg->RTOutWindow > DRCCfg->RTLowerWindow + DRCCfg->RTFilterLen - 1)
+					{
+						sputs("RT->RTOutWindow: RTOutWindow can't be greater than RTLowerWindow + RTFilterLen - 1.");
+						return 1;
+					}
+				if (DRCCfg->RTOutWindow <= 0)
+					PWLen = DRCCfg->RTLowerWindow + DRCCfg->RTFilterLen - 1;
+				else
+					PWLen = DRCCfg->RTOutWindow;
 			}
-		if (DRCCfg->RTPrefilterFctn[0] != 'P' && DRCCfg->RTPrefilterFctn[0] != 'B')
-			{
-				sputs("RT->RTPrefilterFctn: Invalid RTPrefilterFctn supplied.");
-				return 1;
-			}
-		if (DRCCfg->RTWindowGap < 0)
-			{
-				sputs("RT->RTWindowGap: RTWindowGap must be greater or equal to 0.");
-				return 1;
-			}
-		if (DRCCfg->RTLowerWindow <= 0)
-			{
-				sputs("RT->RTLowerWindow: RTLowerWindow must be greater than 0.");
-				return 1;
-			}
-		if (DRCCfg->RTLowerWindow > PWLen)
-			{
-				sprintf(TStr,"%d.",PWLen);
-				sputsp("RT->RTLowerWindow: RTLowerWindow too big. Max allowed value: ", TStr);
-				return 1;
-			}
-		if (DRCCfg->RTUpperWindow <= 0)
-			{
-				sputs("RT->RTUpperWindow: RTUpperWindow must be greater than 0.");
-				return 1;
-			}
-		if (DRCCfg->RTFSharpness <= (DLReal) 0.0)
-			{
-				sputs("RT->RTFSharpness: RTFSharpness must be greater than 0.");
-				return 1;
-			}
-		if (DRCCfg->RTUpperWindow > PWLen)
-			{
-				sprintf(TStr,"%d.",PWLen);
-				sputsp("RT->RTUpperWindow: RTUpperWindow too big. Max allowed value: ", TStr);
-				return 1;
-			}
-		if (DRCCfg->RTWindowExponent <= (DLReal) 0.0)
-			{
-				sputs("RT->RTWindowExponent: RTWindowExponent must be greater than 0.");
-				return 1;
-			}
-		if (DRCCfg->RTNormFactor > 0 && DRCCfg->RTNormType == NULL)
-			{
-				sputs("RT->RTNormType: No RT normalization type supplied.");
-				return 1;
-			}
-		if (DRCCfg->RTOutFile != NULL && DRCCfg->RTOutFileType == NULL)
-			{
-				sputs("RT->RTOutFileType: No RT output file type supplied.");
-				return 1;
-			}
-		if (DRCCfg->RTOutWindow > DRCCfg->RTLowerWindow + DRCCfg->RTFilterLen - 1)
-			{
-				sputs("RT->RTOutWindow: RTOutWindow can't be greater than RTLowerWindow + RTFilterLen - 1.");
-				return 1;
-			}
-		if (DRCCfg->RTOutWindow <= 0)
-			PWLen = DRCCfg->RTLowerWindow + DRCCfg->RTFilterLen - 1;
-		else
-			PWLen = DRCCfg->RTOutWindow;
 
 		/*********************************************************************************/
 		/* Applicazione risposta target */
@@ -1046,7 +1167,6 @@ int CheckDRCCfg(const CfgParmsType * DRCCfg)
 							sputsp("PS->PSOutWindow: PSOutWindow too big. Max allowed value: ", TStr);
 							return 1;
 						}
-					PWLen += DRCCfg->PSFilterLen - 1;
 				break;
 				case 'M':
 					if (DRCCfg->PSOutWindow > PWLen)
@@ -1063,129 +1183,67 @@ int CheckDRCCfg(const CfgParmsType * DRCCfg)
 							sputsp("PS->PSOutWindow: PSOutWindow too big. Max allowed value: ", TStr);
 							return 1;
 						}
-				break;
-			}
-
-		/*********************************************************************************/
-		/* Compensazione microfono */
-		/*********************************************************************************/
-
-		if (DRCCfg->MCFilterType == NULL)
-			{
-				sputs("MC->MCFilterType: No filter type supplied.");
-				return 1;
-			}
-		if (DRCCfg->MCFilterType[0] != 'L' && DRCCfg->MCFilterType[0] != 'M'
-			&& DRCCfg->MCFilterType[0] != 'T')
-			{
-				sputs("MC->MCFilterType: Invalid filter type supplied.");
-				return 1;
-			}
-		if (DRCCfg->MCInterpolationType == NULL)
-			{
-				sputs("MC->MCInterpolationType: No interpolation type supplied.");
-				return 1;
-			}
-		if (DRCCfg->MCInterpolationType[0] != 'L' && DRCCfg->MCInterpolationType[0] != 'G'
-			&& DRCCfg->MCInterpolationType[0] != 'R' && DRCCfg->MCInterpolationType[0] != 'S'
-			&& DRCCfg->MCInterpolationType[0] != 'P' && DRCCfg->MCInterpolationType[0] != 'H')
-			{
-				sputs("MC->MCInterpolationType: Invalid interpolation type supplied.");
-				return 1;
-			}
-		if (DRCCfg->MCMagType == NULL)
-			{
-				sputs("MC->MCMagType: No filter definition magnitude type supplied.");
-				return 1;
-			}
-		if (DRCCfg->MCMagType[0] != 'L' && DRCCfg->MCMagType[0] != 'D')
-			{
-				sputs("MC->MCMagType: Invalid filter definition magnitude type supplied.");
-				return 1;
-			}
-		if (DRCCfg->MCPointsFile == NULL)
-			{
-				sputs("MC->MCPointsFile: No correction point file supplied.");
-				return 1;
-			}
-		if (DRCCfg->MCNumPoints < 0 || DRCCfg->MCNumPoints == 1)
-			{
-				sputs("MC->MCNumPoints: Invalid MCNumPoints supplied, it must be 0 or at least 2.");
-				return 1;
-			}
-		if (DRCCfg->MCNormFactor > 0 && DRCCfg->MCNormType == NULL)
-			{
-				sputs("MC->MCNormType: No normalization type supplied.");
-				return 1;
-			}
-		if (DRCCfg->MCOutFile != NULL && DRCCfg->MCOutFileType == NULL)
-			{
-				sputs("MC->MCOutFileType: No output file type supplied.");
-				return 1;
-			}
-		if (DRCCfg->MCFilterLen <= 0)
-			{
-				sputs("MC->MCFilterLen: MCFilterLen must be greater than 0.");
-				return 1;
-			}
-		switch (DRCCfg->MCFilterType[0])
-			{
-				case 'L':
-					if (DRCCfg->MCOutWindow > PWLen + DRCCfg->MCFilterLen - 1)
+					if (DRCCfg->PSOutWindow < 2 * DRCCfg->ISPELowerWindow)
 						{
-							sprintf(TStr,"%d.",PWLen + DRCCfg->MCFilterLen - 1);
-							sputsp("MC->MCOutWindow: MCOutWindow too big. Max allowed value: ", TStr);
+							sprintf(TStr,"%d.",2 * DRCCfg->ISPELowerWindow);
+							sputsp("PS->PSOutWindow: PSOutWindow too small. Min allowed value: ", TStr);
 							return 1;
 						}
-
-					if (DRCCfg->MCOutWindow > 0)
-						PWLen = DRCCfg->MCOutWindow;
-					else
-						PWLen += DRCCfg->MCFilterLen - 1;
-				break;
-				case 'M':
-					if (DRCCfg->MCOutWindow > PWLen)
+					if (PWLen < 2 * DRCCfg->ISPELowerWindow)
 						{
-							sprintf(TStr,"%d.",PWLen);
-							sputsp("MC->MCOutWindow: MCOutWindow too big. Max allowed value: ", TStr);
+							sprintf(TStr,"%d.",2 * DRCCfg->ISPELowerWindow);
+							sputsp("PS->PSFilterType: Output of previous stages too small to allow for the required pre-echo truncation length. Check either RTOutWindow, PLOutWindow, PTOutWindow or decrease ISPELowerWindow. Min allowed value: ", TStr);
 							return 1;
 						}
-				case 'T':
-					if (DRCCfg->MCOutWindow > PWLen / 2 + DRCCfg->ISPELowerWindow + DRCCfg->MCFilterLen - 1)
-						{
-							sprintf(TStr,"%d.",PWLen / 2 + DRCCfg->ISPELowerWindow + DRCCfg->MCFilterLen - 1);
-							sputsp("MC->MCOutWindow: MCOutWindow too big. Max allowed value: ", TStr);
-							return 1;
-						}
-
-					if (DRCCfg->MCOutWindow > 0)
-						PWLen = DRCCfg->MCOutWindow;
-					else
-						PWLen += DRCCfg->MCFilterLen - 1;
 				break;
 			}
+    PWLen += DRCCfg->PSFilterLen - 1;
 
 		/*********************************************************************************/
 		/* Estrazione filtro a fase minima */
 		/*********************************************************************************/
 
-		if (DRCCfg->MSOutWindow > PWLen)
-			{
-				sprintf(TStr,"%d.",PWLen);
-				sputsp("MS->MSOutWindow: MSOutWindow too big. Max allowed value: ", TStr);
-				return 1;
-			}
-		if (DRCCfg->MSNormFactor > 0 && DRCCfg->MSNormType == NULL)
-			{
-				sputs("MS->MSNormType: No normalization type supplied.");
-				return 1;
-			}
-		if (DRCCfg->MSOutFile != NULL && DRCCfg->MSOutFileType == NULL)
-			{
-				sputs("MS->MSOutFileType: No output file type supplied.");
-				return 1;
-			}
-
+    if (DRCCfg->MSOutFile != NULL)
+      {
+        if (DRCCfg->MSOutWindow > PWLen)
+          {
+            sprintf(TStr,"%d.",PWLen);
+            sputsp("MS->MSOutWindow: MSOutWindow too big. Max allowed value: ",TStr);
+            return 1;
+          }
+        if (DRCCfg->MSFilterDelay < 0)
+          {
+            sputs("MS->MSFilterDelay: MSFilterDelay must be greater than 0.");
+            return 1;
+          }
+        if (DRCCfg->MSOutWindow > 0)
+          {
+            if (DRCCfg->MSFilterDelay >= DRCCfg->MSOutWindow)
+              {
+                sputs("MS->MSFilterDelay: MSFilterDelay must be smaller than MSOutWindow.");
+                return 1;
+              }
+          }
+        else
+          {
+            if (DRCCfg->MSFilterDelay >= PWLen)
+              {
+                sprintf(TStr,"%d.",PWLen);
+                sputsp("MS->MSFilterDelay: MSFilterDelay too big. Max allowed value: ",TStr);
+                return 1;
+              }
+          }
+        if (DRCCfg->MSNormFactor > 0 && DRCCfg->MSNormType == NULL)
+          {
+            sputs("MS->MSNormType: No normalization type supplied.");
+            return 1;
+          }
+        if (DRCCfg->MSOutFile != NULL && DRCCfg->MSOutFileType == NULL)
+          {
+            sputs("MS->MSOutFileType: No output file type supplied.");
+            return 1;
+          }
+      }
 		/*********************************************************************************/
 		/* Convoluzione di test */
 		/*********************************************************************************/

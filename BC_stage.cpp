@@ -20,46 +20,59 @@ bool BCstage::process(void)
 {
   int I, PSStart, PSEnd;
   DLReal* InSig;
+  int samplerate;
 
   OutSignal->clearData();
   DLReal SRMSValue;
 
+  sputs("DRC: Base Configuration stage (BC).");
+  samplerate = SND_GetSampleRate(Cfg.BCInFile);
+  if(samplerate > 0) 
+    Cfg.BCSampleRate = samplerate;
+  printf("BC stage: input signal sample rate:%i Hz.\n",Cfg.BCSampleRate);
+  fflush(stdout);
   /* Controlla il tipo ricerca centro impulso */
   if (Cfg.BCImpulseCenterMode[0] == 'A')  {
     /* Ricerca il centro impulso */
-    sputsp("Seeking impulse center on: ", Cfg.BCInFile);
-    //Cfg.BCImpulseCenter = FindMaxPcm(Cfg.BCInFile,(IFileType) Cfg.BCInFileType[0]);
-    Cfg.BCImpulseCenter = SND_FindMaxPcm(Cfg.BCInFile);
+        sputsp("BC stage: seeking impulse center on: ", Cfg.BCInFile);
+    if(samplerate > 0) 
+      Cfg.BCImpulseCenter = SND_FindMaxPcm(Cfg.BCInFile);
+    else
+      Cfg.BCImpulseCenter = FindMaxPcm(Cfg.BCInFile,(IFileType) Cfg.BCInFileType[0]);
     if (Cfg.BCImpulseCenter < 0)
       return false;
-    printf("Impulse center found at sample %i.\n",Cfg.BCImpulseCenter);
+    printf("BC stage: impulse center found at sample %i.\n",Cfg.BCImpulseCenter);
     fflush(stdout);
-  }  
+  }
   /* Alloca l'array per il segnale in ingresso */
-  sputs("Allocating input signal array.");
   InSig = new DLReal[Cfg.BCInitWindow];
   if (InSig == NULL) {
-    sputs("Memory allocation failed.");
+    sputs("BC Stage: memory allocation failed.");
     return false;
   }  
   /* Legge il file di ingresso */
-  sputsp("Reading input signal: ",Cfg.BCInFile);
-  /*if (ReadSignal(Cfg.BCInFile,InSig,Cfg.BCInitWindow,Cfg.BCImpulseCenter, (IFileType) Cfg.BCInFileType[0],&PSStart,&PSEnd) == False) {
-    sputs("Error reading input signal.");
-    return false;
-    }*/
-  if (SND_ReadSignal(Cfg.BCInFile,InSig,Cfg.BCInitWindow,Cfg.BCImpulseCenter,&PSStart,&PSEnd) == false) {
-    sputs("Error reading input signal.");
-    return false;
+  sputsp("BC stage: reading input signal: ",Cfg.BCInFile);
+
+  if(samplerate > 0) {
+    if (SND_ReadSignal(Cfg.BCInFile,InSig,Cfg.BCInitWindow,Cfg.BCImpulseCenter,&PSStart,&PSEnd) == false) {
+      sputs("BC stage: error reading input signal.");
+      return false;
+    }
   }
-  sputs("Input signal read.");
+  else {
+    if (ReadSignal(Cfg.BCInFile,InSig,Cfg.BCInitWindow,Cfg.BCImpulseCenter,(IFileType) Cfg.BCInFileType[0],&PSStart,&PSEnd) == false) {
+    sputs("BC stage: Error reading input signal.");
+    return false;
+    }
+  }
+  sputs("BC stage: Input signal read.");
   
   /* Effettua la prefinestratura del segnale */
   if (Cfg.BCPreWindowLen > 0) {
-    sputs("Input signal prewindowing.");
+    sputs("BC stage: input signal prewindowing.");
     
     if ((Cfg.BCInitWindow / 2 - Cfg.BCPreWindowLen) < PSStart)
-      sputs("!!Warning: input signal too short for correct signal prewindowing, spurios spikes may be generated.");
+      sputs("BCstage: !!Warning: input signal too short for correct signal prewindowing, spurios spikes may be generated.");
     
     for (I = 0;I < Cfg.BCInitWindow / 2 - Cfg.BCPreWindowLen;I++)
       InSig[I] = 0;
@@ -68,65 +81,39 @@ bool BCstage::process(void)
   
   SRMSValue = GetRMSLevel(InSig,Cfg.BCInitWindow);
   if (SRMSValue > 0)
-    printf("Input signal RMS level %f (%f dB).\n",(double) SRMSValue, (double) (20 * log10((double) SRMSValue)));
+    printf("BC stage: Input signal RMS level %f (%f dB).\n",(double) SRMSValue, (double) (20 * log10((double) SRMSValue)));
   else
-    printf("Input signal RMS level %f (-inf dB).\n",(double) SRMSValue);
-  fflush(stdout); 
+    printf("BC stage: Input signal RMS level %f (-inf dB).\n",(double) SRMSValue);
+  fflush(stdout);
+  
   OutSignal->setPSStart(PSStart);
   OutSignal->setPSEnd(PSEnd);
   
-  /* Verifica se si deve effettuare il dip limiting */
-  if (Cfg.BCDLMinGain > 0) {
-    switch (Cfg.BCDLType[0])
-      {
-	/* Fase lineare */
-      case 'L':
-	sputs("Input signal linear phase dip limiting...");
-	if (C1LPDipLimit(InSig,Cfg.BCInitWindow,Cfg.BCDLMinGain,Cfg.BCDLStart,
-			 Cfg.BCSampleRate,Cfg.BCDLStartFreq,Cfg.BCDLEndFreq,Cfg.BCDLMultExponent) == false) {
-	  sputs("Dip limiting failed.");
-	  return 1;
-	}
-	break;
-	  
-	/* Fase minima */
-      case 'M':
-	sputs("Input signal minimum phase dip limiting...");
-	if (C1HMPDipLimit(InSig,Cfg.BCInitWindow,Cfg.BCDLMinGain,Cfg.BCDLStart,
-			  Cfg.BCSampleRate,Cfg.BCDLStartFreq,Cfg.BCDLEndFreq,Cfg.BCDLMultExponent) == false) {
-	  sputs("Dip limiting failed.");
-	  return 1;
-	}
-	break;
-      }
-  }
   for (I = 0; I < Cfg.BCInitWindow; I++)
     OutSignal->Data.push_back(InSig[I]);
   OutSignal->setWStart(0);
   OutSignal->setWLen(Cfg.BCInitWindow);
   OutSignal->setPath(Cfg.BCBaseDir);
-  OutSignal->Normalize(Cfg.BCNormFactor,Cfg.BCNormType);
-  OutSignal->WriteSignal(Cfg.BCOutFile, Cfg.BCOutFileType);
+
+  sputs("DRC: Finished Base Configuration stage (BC).");
+
   return true;
 }
 
 bool BCstage::SeekImpulseCenter(void)
 {
-  printf("Seeking impulse center on: %s\n", Cfg.BCInFile);
+  printf("BC stage: seeking impulse center on: %s\n", Cfg.BCInFile);
   Cfg.BCImpulseCenter = STL_FindMaxPcm(Cfg.BCInFile,(IFileType) Cfg.BCInFileType[0]);
   if (Cfg.BCImpulseCenter < 0)
     return false;
-  printf("Impulse center found at sample %i.\n",Cfg.BCImpulseCenter);
+  printf("BC stage: impulse center found at sample %i.\n",Cfg.BCImpulseCenter);
   return true;
 }
 bool BCstage::ReadImpulseFile(void)
 {
   int PSStart = 0, PSEnd = 0;
   printf("Reading input signal file: %s\n ",Cfg.BCInFile);
-  OutSignal->setData(STL_ReadSignal(Cfg.BCInFile, Cfg.BCInitWindow, 
-				    Cfg.BCImpulseCenter,
-				    (IFileType) Cfg.BCInFileType[0],
-				    PSStart,PSEnd),
+  OutSignal->setData(STL_ReadSignal(Cfg.BCInFile, Cfg.BCInitWindow, Cfg.BCImpulseCenter,(IFileType) Cfg.BCInFileType[0],PSStart,PSEnd),
 		     0,Cfg.BCInitWindow);
   OutSignal->setPSStart(PSStart);
   OutSignal->setPSEnd(PSEnd);
@@ -134,4 +121,22 @@ bool BCstage::ReadImpulseFile(void)
     return true;
   else
     return false;
+}
+
+void BCstage::Normalize(void)
+{
+  if (Cfg.NormFactor > 0) {
+    sputs("BC stage: output component normalization.");
+    OutSignal->Normalize(Cfg.NormFactor,Cfg.NormType);
+  }
+}
+
+void BCstage::WriteOutput(void)
+{
+  if (Cfg.OutFile != NULL) {
+    sputsp("BC stage: saving output component: ",Cfg.OutFile);
+    if (OutSignal->WriteSignal(Cfg.OutFile, Cfg.OutFileType) == false) {
+      sputs("BC stage: output component save failed.");
+    }
+  }
 }

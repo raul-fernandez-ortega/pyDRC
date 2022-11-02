@@ -31,8 +31,11 @@ class ERstage
   void NewInputSignal(DRCSignal *EPInputSignal);
   void NewInCfg(ERParmsType InCfg);
   ~ERstage() {};
-  void process(void);
+  bool process(void);
   ERParmsType getCfgParms(void) { return Cfg; };
   DRCSignal *getOutSig() { return EPSignal; };
+  void Normalize(void);
+  void WriteOutput(void);
+  
 };
 #endif

@@ -102,6 +102,7 @@ bool SND_WriteSignal(const char * FName,const STLvectorReal Src,const unsigned i
   SNDFILE* sf_file;
   SF_INFO sf_info;
   int short_mask;
+  DLReal Vmax = 0;
   unsigned int I, J, SSize = Src.size();
   
   if (SSize < WStart)
@@ -109,15 +110,28 @@ bool SND_WriteSignal(const char * FName,const STLvectorReal Src,const unsigned i
   
   DLReal *Dst = new DLReal[WLen];
   if (SSize < WStart + WLen) {
-    for(J = 0,I = WStart; I < SSize; I++, J++)
+    for(J = 0,I = WStart; I < SSize; I++, J++) {
+      if(abs(Src[I]) > Vmax)
+	Vmax = abs(Src[I]);
       Dst[J] = Src[I];
+    }
     for(J = SSize - WStart; J < WLen; J++)
       Dst[J] = 0;
   }
   else
-    for(J = 0,I = WStart; J < WLen; I++, J++)
+    for(J = 0,I = WStart; J < WLen; I++, J++) {
+      if(abs(Src[I]) > Vmax)
+	Vmax = abs(Src[I]);
       Dst[J] = Src[I];
-  
+    }
+
+  if(Vmax > 1.0) {
+#ifdef DEBUG 
+    printf("SND_WriteSignal: Max Value greater than one: %.2f.\n",Vmax);
+#endif
+    for(I=0;I < WLen;I++)
+      Dst[I] /= Vmax;
+  }
   sf_info.samplerate = SampleRate;
   sf_info.channels = 1;
   sf_info.frames = 0;
@@ -158,11 +172,22 @@ bool SND_WriteSignal(const char * FName,const DLReal *Src,const unsigned int WSt
   SF_INFO sf_info;
   int short_mask;
   unsigned int I, J;
+  DLReal Vmax =0;
   
   DLReal *Dst = new DLReal[WLen];
-  for(J = 0,I = WStart; J < WLen; I++, J++)
+  for(J = 0,I = WStart; J < WLen; I++, J++) {
+    if(abs(Src[I]) > Vmax)
+      Vmax = abs(Src[I]);
     Dst[J] = Src[I];
-  
+  }
+
+  if(Vmax > 1.0) {
+#ifdef DEBUG 
+    printf("SND_WriteSignal: Max Value greater than one: %.2f.\n",Vmax);
+#endif
+    for(I=0;I < WLen;I++)
+      Dst[I] /= Vmax;
+  }
   sf_info.samplerate = SampleRate;
   sf_info.channels = 1;
   sf_info.frames = 0;

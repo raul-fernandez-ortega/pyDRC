@@ -38,8 +38,47 @@ def drc(DRCfile):
     stage = BCstage(BCstageconf)
     stage.process()
     OutInS = stage.getOutSig()
+
+    # 1 - MC stage. Microphone Compensation.
+
+    MCstageconf = MCParmsType()
+    MCstageconf.MCFilterType = ConfigDict.MCFilterType 
+    MCstageconf.MCInterpolationType = ConfigDict.MCInterpolationType
+    MCstageconf.MCMultExponent = ConfigDict.MCMultExponent
+    MCstageconf.MCFilterLen = ConfigDict.MCFilterLen 
+    MCstageconf.MCNumPoints = ConfigDict.MCNumPoints
+    MCstageconf.MCPointsFile = ConfigDict.BCBaseDir + ConfigDict.MCPointsFile 
+    MCstageconf.MCMagType = ConfigDict.MCMagType
+    MCstageconf.MCFilterFile = ConfigDict.MCFilterFile
+    MCstageconf.MCFilterFileType = ConfigDict.MCFilterFileType
+    MCstageconf.MCOutWindow = ConfigDict.MCOutWindow 
+    MCstageconf.MCNormFactor = ConfigDict.MCNormFactor
+    MCstageconf.MCNormType = ConfigDict.MCNormType
+    MCstageconf.MCOutFile = ConfigDict.MCOutFile
+    MCstageconf.MCOutFileType = ConfigDict.MCOutFileType
+    stage = MCstage(OutInS, MCstageconf)
+    stage.process()
+    OutS = stage.getOutSig()
+
+    # 2 - BCDL stage. Base Configuration Dip Limiting.
+
+    BCDLstageconf = BCDLParmsType()
+    BCDLstageconf.BCDLType = ConfigDict.BCDLType
+    BCDLstageconf.BCDLMinGain = ConfigDict.BCDLMinGain
+    BCDLstageconf.BCDLStartFreq = ConfigDict.BCDLStartFreq
+    BCDLstageconf.BCDLEndFreq = ConfigDict.BCDLEndFreq
+    BCDLstageconf.BCDLStart = ConfigDict.BCDLStart
+    BCDLstageconf.BCDLMultExponent = ConfigDict.BCDLMultExponent
+    BCDLstageconf.BCDLNormFactor = ConfigDict.BCDLNormFactor
+    BCDLstageconf.BCDLNormType = ConfigDict.BCDLNormType
+    BCDLstageconf.BCDLOutFile = ConfigDict.BCDLOutFile
+    BCDLstageconf.BCDLOutFileType = ConfigDict.BCDLOutFileType
+    stage = BCDLstage(OutS, BCDLstageconf)
+    stage.process()
+    OutS = stage.getOutSig()
     
-    # 1 - HD stage. Homomorphic Deconvolution.
+    
+    # 3 - HD stage. Homomorphic Deconvolution.
 
     HDstageconf = HDParmsType()
     HDstageconf.HDMultExponent = ConfigDict.HDMultExponent
@@ -51,12 +90,12 @@ def drc(DRCfile):
     HDstageconf.HDEPNormFactor = ConfigDict.HDEPNormFactor
     HDstageconf.HDEPOutFile = ConfigDict.HDEPOutFile
     HDstageconf.HDEPOutFileType = ConfigDict.HDEPOutFileType
-    stage = HDstage(OutInS,HDstageconf)
+    stage = HDstage(OutS,HDstageconf)
     stage.process()
     MPS = stage.getMPSig()
     EPS = stage.getEPSig()
     
-    # 2 - MP stage. Minimum phase Prefiltering.
+    # 4 - MP stage. Minimum phase Prefiltering.
 
     MPstageconf = WFParmsType()
     MPstageconf.WFfilterType = ConfigDict.MPPrefilterType
@@ -72,15 +111,15 @@ def drc(DRCfile):
     MPstageconf.WFWindowExponent = ConfigDict.MPWindowExponent
     MPstageconf.WFFinalWindow = ConfigDict.MPPFFinalWindow
     MPstageconf.WFRTFlag = 'N'
-    #MPstageconf.WFNormFactor = ConfigDict.MPPFNormFactor
-    #MPstageconf.WFNormType = ConfigDict.MPPFNormType
-    #MPstageconf.WFOutFile = ConfigDict.MPPFOutFile 
-    #MPstageconf.WFOutFileType = ConfigDict.MPPFOutFileType
+    MPstageconf.WFNormFactor = ConfigDict.MPPFNormFactor
+    MPstageconf.WFNormType = ConfigDict.MPPFNormType
+    MPstageconf.WFOutFile = ConfigDict.MPPFOutFile 
+    MPstageconf.WFOutFileType = ConfigDict.MPPFOutFileType
     stage = WFstage(MPS,MPstageconf)
     stage.process()
     MPS = stage.getOutSig()
     
-    # 3 - DL stage. Dip Limiting.
+    # 5 - DL stage. Dip Limiting.
 
     DLstageconf = DLParmsType()
     DLstageconf.DLType = ConfigDict.DLType
@@ -89,15 +128,15 @@ def drc(DRCfile):
     DLstageconf.DLEndFreq = ConfigDict.DLEndFreq
     DLstageconf.DLStart = ConfigDict.DLStart
     DLstageconf.DLMultExponent = ConfigDict.DLMultExponent
-    #DLstageconf.DLNormFactor = ConfigDict.MPPFNormFactor
-    #DLstageconf.DLNormType = ConfigDict.MPPFNormType
-    #DLstageconf.DLOutFile = ConfigDict.MPPFOutFile
-    #DLstageconf.DLOutFileType = ConfigDict.MPPFOutFileType
+    DLstageconf.DLNormFactor = ConfigDict.MPPFNormFactor
+    DLstageconf.DLNormType = ConfigDict.MPPFNormType
+    DLstageconf.DLOutFile = ConfigDict.MPPFOutFile
+    DLstageconf.DLOutFileType = ConfigDict.MPPFOutFileType
     stage = DLstage(MPS,DLstageconf)
     stage.process()
     MPS = stage.getOutSig()
     
-    # 5 - HR stage. Homomorphic recovery.
+    # 6 - HR stage. Homomorphic recovery.
 
     HRstageconf = HRParmsType()
     HRstageconf.HRMPHDRecover = ConfigDict.MPHDRecover
@@ -109,16 +148,16 @@ def drc(DRCfile):
     HRstageconf.HRMPNormType = ConfigDict.MPPFNormType
     HRstageconf.HRMPOutFile = ConfigDict.MPPFOutFile
     HRstageconf.HRMPOutFileType = ConfigDict.MPPFOutFileType
-    #HRstageconf.HREPNormFactor = ConfigDict.EPPFNormFactor
-    #HRstageconf.HREPNormType = ConfigDict.EPPFNormType
-    #HRstageconf.HREPOutFile = ConfigDict.EPPFOutFile
-    #HRstageconf.HREPOutFileType = ConfigDict.EPPFOutFileType
+    HRstageconf.HREPNormFactor = ConfigDict.EPPFNormFactor
+    HRstageconf.HREPNormType = ConfigDict.EPPFNormType
+    HRstageconf.HREPOutFile = ConfigDict.EPPFOutFile
+    HRstageconf.HREPOutFileType = ConfigDict.EPPFOutFileType
     stage = HRstage(MPS,EPS,HRstageconf)
     stage.process()    
     MPS = stage.getMPSig()
     EPS = stage.getEPSig()
 
-    # 4 - EP stage. Excess phase Prefiltering.
+    # 7 - EP stage. Excess phase Prefiltering.
  
     EPstageconf = WFParmsType()
     EPstageconf.WFfilterType = ConfigDict.EPPrefilterType
@@ -134,15 +173,15 @@ def drc(DRCfile):
     EPstageconf.WFWindowExponent = ConfigDict.EPWindowExponent
     EPstageconf.WFFinalWindow = ConfigDict.EPPFFinalWindow
     EPstageconf.WFRTFlag = 'N'
-    #EPstageconf.WFNormFactor = ConfigDict.EPPFNormFactor
-    #EPstageconf.WFNormType = ConfigDict.EPPFNormType
-    #EPstageconf.WFOutFile = ConfigDict.EPPFOutFile
-    #EPstageconf.WFOutFileType = ConfigDict.EPPFOutFileType
+    EPstageconf.WFNormFactor = ConfigDict.EPPFNormFactor
+    EPstageconf.WFNormType = ConfigDict.EPPFNormType
+    EPstageconf.WFOutFile = ConfigDict.EPPFOutFile
+    EPstageconf.WFOutFileType = ConfigDict.EPPFOutFileType
     stage = WFstage(EPS,EPstageconf)
     stage.process()
     EPS = stage.getOutSig()
     
-    # 5 - ER stage. Excess phase recovery.
+    # 8 - ER stage. Excess phase recovery.
 
     ERstageconf = ERParmsType()
     ERstageconf.EREPFlatGain = ConfigDict.EPPFFlatGain
@@ -158,7 +197,7 @@ def drc(DRCfile):
     stage.process()    
     EPS = stage.getOutSig()
 
-    # 6 - IS stage.Inversion Stage.
+    # 9 - IS stage.Inversion Stage.
 
     ISstageconf = ISParmsType()
     ISstageconf.PCOutWindow = ConfigDict.PCOutWindow 
@@ -188,7 +227,7 @@ def drc(DRCfile):
     stage.process()
     OutS = stage.getISOutSig()
     
-    # 7 - PT stage.Psychoacoustic Stage.
+    # 10 - PT stage.Psychoacoustic Stage.
 
     PTstageconf = PTParmsType()
     PTstageconf.PTType = ConfigDict.PTType
@@ -215,7 +254,7 @@ def drc(DRCfile):
     stage.process()
     OutS = stage.getOutSig()
 
-    # 8 - PL stage. Peak Limiting.
+    # 11 - PL stage. Peak Limiting.
     
     PLstageconf = PLParmsType()
     PLstageconf.PLType = ConfigDict.PLType
@@ -233,7 +272,7 @@ def drc(DRCfile):
     stage.process()
     OutS = stage.getOutSig()
     
-    # 9 - RT stage. Ringing Truncation.
+    # 12 - RT stage. Ringing Truncation.
 
     RTstageconf = WFParmsType()
     RTstageconf.WFfilterType = ConfigDict.RTType
@@ -258,7 +297,7 @@ def drc(DRCfile):
         stage.process()
         OutS = stage.getOutSig()
     
-    # 10 - PS stage. Postfiltering Stage.
+    # 13 - PS stage. Postfiltering Stage.
 
     PSstageconf = PSParmsType()
     PSstageconf.PSFilterType = ConfigDict.PSFilterType 
@@ -278,28 +317,7 @@ def drc(DRCfile):
     stage.process()
     OutS = stage.getOutSig()
     
-    # 11 - MC stage. Microphone Compensation.
-
-    MCstageconf = PSParmsType()
-    MCstageconf.PSFilterType = ConfigDict.MCFilterType 
-    MCstageconf.PSInterpolationType = ConfigDict.MCInterpolationType
-    MCstageconf.PSMultExponent = ConfigDict.MCMultExponent
-    MCstageconf.PSFilterLen = ConfigDict.MCFilterLen 
-    MCstageconf.PSNumPoints = ConfigDict.MCNumPoints
-    MCstageconf.PSPointsFile = ConfigDict.BCBaseDir + ConfigDict.MCPointsFile 
-    MCstageconf.PSMagType = ConfigDict.MCMagType
-    MCstageconf.PSOutWindow = ConfigDict.MCOutWindow 
-    MCstageconf.PSNormFactor = ConfigDict.MCNormFactor
-    MCstageconf.PSNormType = ConfigDict.MCNormType
-    MCstageconf.PSOutFile = ConfigDict.MCOutFile
-    MCstageconf.PSOutFileType = ConfigDict.MCOutFileType
-    MCstageconf.ISPELowerWindow = ConfigDict.ISPELowerWindow
-    stage = PSstage(OutS, MCstageconf)
-    stage.process()
-    OutS = stage.getOutF()
-    
-    
-    # 12 - MS stage. Minimum phase filter extraction.
+    # 14 - MS stage. Minimum phase filter extraction.
 
     MSstageconf = MSParmsType()
     MSstageconf.MSMultExponent = ConfigDict.MSMultExponent
@@ -311,7 +329,7 @@ def drc(DRCfile):
     stage = MSstage(OutS,MSstageconf)
     stage.process()
     
-    # 13 - TC stage. Test Convolution.
+    # 15 - TC stage. Test Convolution.
 
     TCstageconf = TCParmsType()
     TCstageconf.TCNormFactor = ConfigDict.TCNormFactor

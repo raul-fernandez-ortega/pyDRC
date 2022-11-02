@@ -114,7 +114,7 @@ char *DRCSignal::getPath(void)
 void DRCSignal::Normalize(DLReal normfactor, char* normtype)
 {
   if (normfactor > 0) {
-    printf("Input signal normalization: %s type.\n",normtype);
+    printf("DRCSignal: input signal normalization: %s type.\n",normtype);
     STL_SigNormalize(Data,normfactor,(NormType) normtype[0]);
   }
 }
@@ -131,9 +131,9 @@ bool DRCSignal::WriteSignal(char* outfile, char* outfiletype)
       path_outfile = (char*) malloc(sizeof(char)*(1+strlen(outfile)));
       strcpy(path_outfile,outfile);
     }
-    printf("Saving output signal: %s\n",path_outfile);
+    printf("DRCSignal: saving signal: %s\n",path_outfile);
     if (SND_WriteSignal(path_outfile,Data,WStart,WLen, SampleRate, (IFileType) outfiletype[0]) == false) {
-      printf("Input signal component save failed.\n");
+      printf("DRCSignal: signal saving failed.\n");
       return false;
     }
     return true;

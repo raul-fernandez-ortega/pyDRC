@@ -19,13 +19,15 @@ void ERstage::NewInCfg(ERParmsType InCfg)
   Cfg = InCfg;
 }
 
-void ERstage::process(void)
+bool ERstage::process(void)
 {
   int I, J;
   int EPDataLen;
   DLReal *EPSig;
   DLReal *EPPFSig;
 
+  sputs("DRC: Excess Phase Recovery stage (ER).");
+  
   EPDataLen = EPInSig->getData().size();
   EPSignal->clearData();
   EPPFSig = new DLReal[EPDataLen];
@@ -36,22 +38,22 @@ void ERstage::process(void)
   if (Cfg.EREPFlatGain > 0) {
     switch (Cfg.EREPFlatType[0]) {
     case 'L':
-      sputs("Excess phase component linear phase flattening...");
+      sputs("ER stage: excess phase component linear phase flattening...");
       LPNormFlat(&EPPFSig[EPInSig->getWStart()],EPInSig->getWLen(),Cfg.EREPFlatGain, Cfg.EREPOGainFactor,Cfg.EREPFGMultExponent);
       break;
       
     case 'M':
-      sputs("Excess phase component minimum phase flattening...");
+      sputs("ER stage: excess phase component minimum phase flattening...");
       CMPNormFlat(&EPPFSig[EPInSig->getWStart()],EPInSig->getWLen(),Cfg.EREPFlatGain, Cfg.EREPOGainFactor,Cfg.EREPFGMultExponent);
       break;
       
     case 'D':
       /* Alloca gli array per la deconvoluzione omomorfa */
-      sputs("Allocating homomorphic deconvolution arrays.");
+      sputs("ER stage: allocating homomorphic deconvolution arrays.");
       EPSig = new DLReal[EPInSig->getWLen()];
       if (EPSig == NULL) {
 	sputs("Memory allocation failed.");
-	return;
+	return false;
       }
       
       /* Azzera gli array per la deconvoluzione omomorfa */
@@ -59,10 +61,10 @@ void ERstage::process(void)
 	EPSig[I] = 0;
       
       /* Effettua la deconvoluzione omomorfa*/
-      sputs("Excess phase component homomorphic deconvolution flattening...");
+      sputs("ER stage: excess phase component homomorphic deconvolution flattening...");
       if (CepstrumHD(&EPPFSig[EPInSig->getWStart()],NULL,EPSig, EPInSig->getWLen(),Cfg.EREPFGMultExponent) == false) {
-	sputs("Homomorphic deconvolution failed.");
-	return;
+	sputs("ER stage: homomorphic deconvolution failed.");
+	return false;
       }
       
       /* Copia il risultato nell'array destinazione */
@@ -76,7 +78,7 @@ void ERstage::process(void)
   }
   /* Verifica se si deve effettuare la finestratura finale */
   if (Cfg.EREPFinalWindow > 0) {
-    sputs("Excess phase component final windowing.");
+    sputs("ER stage: excess phase component final windowing.");
     BlackmanWindow(&EPPFSig[EPInSig->getWStart()],EPInSig->getWLen());
   }
   
@@ -86,4 +88,25 @@ void ERstage::process(void)
   EPSignal->setWLen(EPInSig->getWLen());
   EPSignal->Normalize(Cfg.EREPNormFactor, Cfg.EREPNormType);
   EPSignal->WriteSignal(Cfg.EREPOutFile,  Cfg.EREPOutFileType);
+
+  sputs("DRC: Finished Excess Phase Recovery stage (ER).");
+  return true;
+}
+
+void ERstage::Normalize(void)
+{
+  if (Cfg.EREPNormFactor > 0) {
+    sputs("ER stage: output component normalization.");
+    EPSignal->Normalize(Cfg.EREPNormFactor,Cfg.EREPNormType);
+  }
+}
+
+void ERstage::WriteOutput(void)
+{
+  if (Cfg.EREPOutFile != NULL) {
+    sputsp("ER stage: saving output component: ",Cfg.EREPOutFile);
+    if (EPSignal->WriteSignal(Cfg.EREPOutFile, Cfg.EREPOutFileType) == false) {
+      sputs("ER stage: output component save failed.");
+    }
+  }
 }
